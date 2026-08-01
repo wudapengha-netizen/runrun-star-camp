@@ -1,0 +1,19 @@
+name = "runrun-camp-save"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+# 存学习记录的 KV。id 要换成你自己创建的那个：
+#   npx wrangler kv namespace create SAVES
+# 命令会打印一行 id = "xxxxx"，把它填到下面。
+[[kv_namespaces]]
+binding = "SAVES"
+id = "把这里换成你自己的 KV id"
+
+[vars]
+# 只允许你的 GitHub Pages 网址访问。填成 "*" 也能用，
+# 但填具体网址更稳妥（别人把你的网址嵌进自己页面也调不动）。
+ALLOW_ORIGIN = "*"
+
+# 配对码是密钥，不写在这个文件里（这个文件会进 git）。
+# 用命令单独设置：
+#   npx wrangler secret put CAMP_KEY

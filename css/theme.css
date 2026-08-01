@@ -1,0 +1,305 @@
+/* ============================================================
+   润润的三年级闯关营 —— 设计系统
+   意象：宣纸 · 朱砂印 · 泥金 · 青绿山水
+   全部使用 Windows 自带字体，离线可用，不依赖任何 CDN
+   ============================================================ */
+
+:root {
+  /* —— 纸与墨 —— */
+  --paper:        #faf3e3;
+  --paper-warm:   #f4e9d2;
+  --paper-deep:   #ecdcbd;
+  --paper-edge:   #ddc9a3;
+
+  --ink:          #2b2621;
+  --ink-soft:     #5d5347;
+  --ink-faint:    #8e8375;
+
+  /* —— 颜料 —— */
+  --cinnabar:      #c8412f;   /* 朱砂 · 主强调 */
+  --cinnabar-deep: #9c2b1b;
+  --cinnabar-wash: #f3d9d2;
+
+  --gold:         #c2952f;   /* 泥金 · 奖励 */
+  --gold-deep:    #96701c;
+  --gold-wash:    #f6ecd0;
+
+  --jade:         #3f8574;   /* 青绿 · 英语 */
+  --jade-wash:    #d9ebe4;
+  --azurite:      #35648f;   /* 石青 · 数学 */
+  --azurite-wash: #d7e4ef;
+  --ochre:        #cf8228;   /* 赭石 */
+
+  --grass:        #6a8f3c;   /* 正确 */
+  --grass-wash:   #e2ecd2;
+
+  /* —— 学科主题色 —— */
+  --s-chinese:      var(--cinnabar);
+  --s-chinese-wash: var(--cinnabar-wash);
+  --s-math:         var(--azurite);
+  --s-math-wash:    var(--azurite-wash);
+  --s-english:      var(--jade);
+  --s-english-wash: var(--jade-wash);
+
+  /* —— 字体 —— */
+  /* 楷体：中国语文课本教汉字用的就是楷体，孩子照着写不会写错笔形 */
+  --font-brush: "KaiTi", "STKaiti", "楷体", "Kaiti SC", serif;
+  --font-body:  "Microsoft YaHei UI", "Microsoft YaHei", "微软雅黑",
+                "PingFang SC", sans-serif;
+  --font-num:   "Bahnschrift", "DIN Alternate", "Segoe UI Semibold", sans-serif;
+  --font-en:    "Segoe UI", "Candara", sans-serif;
+
+  /* —— 尺度（三年级孩子，整体放大）—— */
+  --fs-hero:  clamp(34px, 4.2vw, 52px);
+  --fs-h1:    30px;
+  --fs-h2:    23px;
+  --fs-h3:    19px;
+  --fs-body:  17px;
+  --fs-small: 14.5px;
+  --fs-q:     22px;   /* 题干 */
+  --fs-hanzi: 46px;   /* 生字 */
+
+  /* —— 木刻套印式硬阴影，绝不用模糊柔光 —— */
+  --stamp-1: 3px 3px 0 var(--ink);
+  --stamp-2: 5px 5px 0 var(--ink);
+  --stamp-soft: 3px 3px 0 rgba(43, 38, 33, .22);
+
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 22px;
+
+  --border: 2.5px solid var(--ink);
+  --border-thin: 2px solid var(--ink);
+
+  --ease-pop: cubic-bezier(.34, 1.56, .64, 1);
+}
+
+/* 关掉动效（家长开关） */
+:root[data-motion="off"] *,
+:root[data-motion="off"] *::before,
+:root[data-motion="off"] *::after {
+  animation-duration: .001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .001ms !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { scrollbar-gutter: stable; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: 1.75;
+  color: var(--ink);
+  background: var(--paper);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ——— 宣纸肌理：细纤维 + 墨晕，全部用渐变画，零图片 ——— */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    /* 纸纤维横纹 */
+    repeating-linear-gradient(
+      92deg,
+      rgba(155, 133, 96, .045) 0 1px,
+      transparent 1px 4px
+    ),
+    repeating-linear-gradient(
+      3deg,
+      rgba(155, 133, 96, .03) 0 1px,
+      transparent 1px 7px
+    ),
+    /* 四角墨晕 */
+    radial-gradient(ellipse 70% 55% at 8% 0%,   rgba(180, 150, 100, .17), transparent 62%),
+    radial-gradient(ellipse 60% 50% at 100% 12%, rgba(200, 65, 47, .07),  transparent 60%),
+    radial-gradient(ellipse 80% 60% at 50% 108%, rgba(120, 110, 85, .13), transparent 65%);
+}
+
+/* 内容压在纸纹之上 */
+.page { position: relative; z-index: 1; }
+
+/* ============================================================
+   排印
+   ============================================================ */
+
+h1, h2, h3, .brush {
+  font-family: var(--font-brush);
+  font-weight: 700;
+  letter-spacing: .04em;
+  line-height: 1.35;
+  margin: 0;
+}
+
+h1 { font-size: var(--fs-h1); }
+h2 { font-size: var(--fs-h2); }
+h3 { font-size: var(--fs-h3); }
+
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.en  { font-family: var(--font-en); }
+
+/* 竖排小标题（书脊感） */
+.vert {
+  writing-mode: vertical-rl;
+  font-family: var(--font-brush);
+  letter-spacing: .3em;
+}
+
+/* 朱砂印章标题 */
+.seal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-brush);
+  font-size: var(--fs-h2);
+  font-weight: 700;
+}
+.seal-title::before {
+  content: "";
+  width: 8px; height: 26px;
+  background: var(--cinnabar);
+  border-radius: 2px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+/* ============================================================
+   基础控件 —— 厚墨边 + 硬套印阴影
+   ============================================================ */
+
+.btn {
+  font-family: var(--font-brush);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  padding: 11px 26px;
+  border: var(--border);
+  border-radius: var(--r-md);
+  background: var(--paper-warm);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: var(--stamp-1);
+  transition: transform .12s var(--ease-pop), box-shadow .12s var(--ease-pop),
+              background .15s ease;
+  user-select: none;
+}
+.btn:hover  { transform: translate(-1.5px, -1.5px); box-shadow: 5px 5px 0 var(--ink); background: var(--paper-deep); }
+.btn:active { transform: translate(3px, 3px);       box-shadow: 0 0 0 var(--ink); }
+.btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; transform: none; box-shadow: var(--stamp-1); }
+
+.btn-primary { background: var(--cinnabar); color: #fff5ee; border-color: var(--ink); }
+.btn-primary:hover { background: var(--cinnabar-deep); }
+
+.btn-gold { background: var(--gold); color: #2b2621; }
+.btn-gold:hover { background: var(--gold-deep); color: #fff8e6; }
+
+.btn-ghost { background: transparent; box-shadow: none; border-width: 2px; }
+.btn-ghost:hover { background: var(--paper-deep); box-shadow: var(--stamp-1); }
+
+.btn-sm { font-size: 15px; padding: 7px 16px; border-width: 2px; box-shadow: 2px 2px 0 var(--ink); }
+.btn-sm:hover { box-shadow: 3.5px 3.5px 0 var(--ink); }
+
+/* 纸卡 */
+.card {
+  background: var(--paper-warm);
+  border: var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--stamp-2);
+  padding: 26px 30px;
+  position: relative;
+}
+
+/* 卡片右上角的装饰性折角 */
+.card--fold::after {
+  content: "";
+  position: absolute;
+  top: -2.5px; right: -2.5px;
+  width: 30px; height: 30px;
+  background: var(--paper);
+  border-left: var(--border);
+  border-bottom: var(--border);
+  border-radius: 0 var(--r-lg) 0 10px;
+}
+
+/* 输入框：写在格子里 */
+.input {
+  font-family: var(--font-brush);
+  font-size: 21px;
+  padding: 9px 15px;
+  border: var(--border-thin);
+  border-radius: var(--r-sm);
+  background: #fffdf6;
+  color: var(--ink);
+  box-shadow: inset 2px 2px 0 rgba(43,38,33,.07);
+  min-width: 0;
+}
+.input:focus { outline: none; border-color: var(--cinnabar); box-shadow: inset 2px 2px 0 rgba(200,65,47,.1), 0 0 0 3px var(--cinnabar-wash); }
+
+/* 田字格输入 */
+.input-tian {
+  width: 62px; height: 62px;
+  font-size: 32px;
+  text-align: center;
+  padding: 0;
+  background:
+    linear-gradient(var(--cinnabar-wash), var(--cinnabar-wash)) center / 100% 1px no-repeat,
+    linear-gradient(var(--cinnabar-wash), var(--cinnabar-wash)) center / 1px 100% no-repeat,
+    #fffdf6;
+  border: 2px dashed var(--cinnabar);
+}
+
+/* 分隔：手绘墨线 */
+.rule {
+  height: 3px;
+  border: 0;
+  margin: 26px 0;
+  background: var(--ink);
+  border-radius: 2px;
+  opacity: .8;
+  /* 两端渐隐，像毛笔起收 */
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+/* 标签 */
+.tag {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 11px;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  letter-spacing: .04em;
+}
+
+/* 无障碍：仅屏幕阅读器 */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 13px; height: 13px; }
+::-webkit-scrollbar-track { background: var(--paper-deep); }
+::-webkit-scrollbar-thumb {
+  background: var(--ink-faint);
+  border: 3px solid var(--paper-deep);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
+
+::selection { background: var(--gold); color: var(--ink); }

@@ -1,0 +1,21 @@
+# ⚠️ 学习记录是孩子的个人数据，绝对不要传到 GitHub
+save/*.json
+save/backup/
+save/**/*.json
+
+# 背景音乐是你自己放的，可能有版权，也别传
+music/*.mp3
+music/*.m4a
+music/*.wav
+music/*.ogg
+
+# 临时文件
+*.tmp
+*.bak
+_probe*.html
+_filetest.html
+.DS_Store
+Thumbs.db
+
+# 云端存档的密钥，绝对不能进仓库
+.dev.vars
