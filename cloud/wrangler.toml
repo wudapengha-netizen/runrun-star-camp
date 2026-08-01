@@ -9,6 +9,18 @@ compatibility_date = "2026-01-01"
 binding = "SAVES"
 id = "40d0f1f850684ba093a979701bf5f57e"
 
+# —— 自定义域名 ——
+# workers.dev 这个域名在国内会被 DNS 污染（解析到假 IP），
+# 但 Cloudflare 边缘节点本身是通的（实测直连 0.15 秒）。
+# 所以绑一个自己的域名就能正常用。
+#
+# 域名的 NS 改到 Cloudflare 之后，把下面两行取消注释、
+# 换成你自己的域名，再 npx wrangler deploy 就会自动建好。
+#
+# routes = [
+#   { pattern = "save.你的域名.com", custom_domain = true }
+# ]
+
 [vars]
 # 只允许你的 GitHub Pages 网址访问。填成 "*" 也能用，
 # 但填具体网址更稳妥（别人把你的网址嵌进自己页面也调不动）。
