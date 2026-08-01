@@ -354,7 +354,16 @@
         return { ok: true };
       })
       .catch(function (e) {
-        return { ok: false, error: '连不上云端存档：' + ((e && e.message) || e) };
+        // 分清「码错了」和「网络到不了」—— 后者在部分地区是 DNS 被污染，
+        // 用户改多少次配对码都没用，得直接说清楚
+        var abort = e && (e.name === 'AbortError' || /abort/i.test(e.message || ''));
+        return {
+          ok: false,
+          network: true,
+          error: abort
+            ? '连不上云端存档（超时）。这不是配对码的问题 —— 是这台设备的网络到不了存档服务器。换个网络（比如手机热点）试试，还不行就先用本地存档。'
+            : '连不上云端存档：' + ((e && e.message) || e)
+        };
       });
   }
 

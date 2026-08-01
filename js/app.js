@@ -184,6 +184,15 @@
         } else {
           msg.innerHTML = '<b style="color:var(--cinnabar)">❌ ' + Quiz.esc(r.error) + '</b>';
           SFX.play('wrong');
+          // 网络到不了：给个"先不连，本地用着"的出口，别让人卡在这儿反复试
+          if (r.network && !msg.querySelector('.skip')) {
+            var skip = Quiz.el('button', 'btn btn-sm btn-ghost skip', '先不连，用本地存档');
+            skip.type = 'button';
+            skip.style.marginTop = '10px';
+            skip.onclick = function () { mask.remove(); };
+            msg.appendChild(document.createElement('br'));
+            msg.appendChild(skip);
+          }
         }
       });
     }
