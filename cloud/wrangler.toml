@@ -2,28 +2,29 @@ name = "runrun-camp-save"
 main = "worker.js"
 compatibility_date = "2026-01-01"
 
-# 存学习记录的 KV。id 要换成你自己创建的那个：
+# —— 自定义域名 ——
+# workers.dev 那个免费域名在国内会被 DNS 污染（解析到假 IP），
+# 但 Cloudflare 边缘节点本身是通的（实测直连 0.15 秒）。
+# 所以绑一个自己的域名来绕开污染。
+#
+# ⚠️ TOML 规则：顶层配置（routes / name / main 这些）必须写在
+#    所有 [表] 和 [[数组表]] 的前面，否则会被当成上一个表的字段。
+routes = [
+  { pattern = "save.qiuzhiniao.work", custom_domain = true }
+]
+
+# 保留 workers.dev 那个地址当备用（国外能用，国内被污染）。
+# 只写 routes 的话 wrangler 会自动关掉它。
+workers_dev = true
+
+# 存学习记录的 KV。id 换成你自己创建的那个：
 #   npx wrangler kv namespace create SAVES
-# 命令会打印一行 id = "xxxxx"，把它填到下面。
 [[kv_namespaces]]
 binding = "SAVES"
 id = "40d0f1f850684ba093a979701bf5f57e"
 
-# —— 自定义域名 ——
-# workers.dev 这个域名在国内会被 DNS 污染（解析到假 IP），
-# 但 Cloudflare 边缘节点本身是通的（实测直连 0.15 秒）。
-# 所以绑一个自己的域名就能正常用。
-#
-# 域名的 NS 改到 Cloudflare 之后，把下面两行取消注释、
-# 换成你自己的域名，再 npx wrangler deploy 就会自动建好。
-#
-# routes = [
-#   { pattern = "save.你的域名.com", custom_domain = true }
-# ]
-
 [vars]
-# 只允许你的 GitHub Pages 网址访问。填成 "*" 也能用，
-# 但填具体网址更稳妥（别人把你的网址嵌进自己页面也调不动）。
+# 只允许指定来源访问。填 "*" 也能用，填具体网址更稳妥。
 ALLOW_ORIGIN = "*"
 
 # 配对码是密钥，不写在这个文件里（这个文件会进 git）。
