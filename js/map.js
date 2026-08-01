@@ -18,7 +18,7 @@
     for (var i = 1; i <= 31; i++) if (Store.isDayDone(i)) doneCount++;
 
     head.innerHTML =
-      '<div><h1 class="map-title">' + esc(PROFILE.name) + '的三年级闯关营' +
+      '<div><h1 class="map-title">' + esc(PROFILE.siteName || (PROFILE.name + '的三年级闯关营')) +
       '<small>八月三十一关 · 语文 数学 英语 · 已通 ' + doneCount + ' / 31 关</small></h1></div>';
 
     var right = el('div');

@@ -52,7 +52,10 @@
     var el = Quiz.el;
 
     var brand = el('div', 'hud-brand');
-    brand.innerHTML = (PROFILE.avatar || '🐯') + ' <b>' + Quiz.esc(PROFILE.name) + '</b>的闯关营';
+    var site = PROFILE.siteName || (PROFILE.name + '的闯关营');
+    brand.innerHTML = (PROFILE.avatar || '🐯') + ' ' +
+      Quiz.esc(site).replace(Quiz.esc(PROFILE.name), '<b>' + Quiz.esc(PROFILE.name) + '</b>');
+    document.title = site + ' · 八月三十一关';
     brand.onclick = function () { go('map'); };
     hud.appendChild(brand);
 
