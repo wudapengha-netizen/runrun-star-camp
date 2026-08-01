@@ -7,7 +7,7 @@ compatibility_date = "2026-01-01"
 # 命令会打印一行 id = "xxxxx"，把它填到下面。
 [[kv_namespaces]]
 binding = "SAVES"
-id = "把这里换成你自己的 KV id"
+id = "40d0f1f850684ba093a979701bf5f57e"
 
 [vars]
 # 只允许你的 GitHub Pages 网址访问。填成 "*" 也能用，
