@@ -11,6 +11,6 @@
       配对码是每台设备第一次打开时，由家长在网页上输入一次的。
    ============================================================ */
 window.CLOUD = {
-  url: 'https://runrun-camp-save.wudapeng-ha.workers.dev',
+  url: '',   // ← workers.dev 在你的网络下被 DNS 污染，暂时留空；见下方说明
   profile: null       // 留空就用 PROFILE.name（润润）
 };
