@@ -73,6 +73,29 @@
       wrap.appendChild(box);
     });
 
+    // —— 单科总测入口 ——
+    var tests = el('div', 'card card--fold');
+    tests.style.cssText = 'margin-bottom:26px;background:linear-gradient(135deg,#e9f0f6,#dbe7f1)';
+    tests.appendChild(el('div', 'seal-title', '整册总测'));
+    tests.appendChild(el('hr', 'rule'));
+    var tp = el('div', 'q-sub');
+    tp.innerHTML = '不按天走，直接考<b>一整本书</b>的知识点。' +
+                   '想摸底、或者学完想检验一下，就来做这个。选择题点选，填空和计算直接打字，交卷马上出分。';
+    tests.appendChild(tp);
+    var trow = el('div');
+    trow.style.cssText = 'display:flex;gap:14px;flex-wrap:wrap;margin-top:16px';
+    var tmath = el('button', 'btn btn-primary', '📐 数学期末测试（全册 · 150 分）');
+    tmath.type = 'button';
+    tmath.style.fontSize = '18px';
+    tmath.onclick = function () { SFX.play('tap'); location.href = 'exam-math.html'; };
+    trow.appendChild(tmath);
+    var soon = el('span', 'q-sub');
+    soon.style.cssText = 'align-self:center;color:var(--ink-faint)';
+    soon.textContent = '语文、英语的整册总测还在做';
+    trow.appendChild(soon);
+    tests.appendChild(trow);
+    wrap.appendChild(tests);
+
     // —— 徽章墙 ——
     var bwrap = el('div', 'card');
     bwrap.style.marginTop = '10px';

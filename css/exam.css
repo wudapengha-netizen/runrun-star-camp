@@ -1,0 +1,170 @@
+/* ============================================================
+   exam.css —— 试卷样式
+   考试模式刻意做得安静：没有礼花、没有游戏化元素，
+   像一张真的卷子，让孩子知道这是「正式考试」。
+   ============================================================ */
+
+.exam-wrap { max-width: 900px; margin: 0 auto; padding: 30px 26px 120px; }
+
+.exam-top {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 26px; border-bottom: 3px solid var(--ink);
+  background: var(--paper-warm); position: sticky; top: 0; z-index: 50;
+}
+.exam-top .name { font-family: var(--font-brush); font-size: 22px; font-weight: 700; }
+.exam-top .sp { flex: 1; }
+
+/* ---------- 卷头 ---------- */
+.exam-head { text-align: center; padding: 26px 0 22px; border-bottom: 3px double var(--ink); margin-bottom: 26px; }
+.exam-head h1 { font-family: var(--font-brush); font-size: 38px; letter-spacing: .04em; }
+.exam-head .sub { font-size: 15px; color: var(--ink-soft); margin-top: 8px; }
+.exam-head .meta {
+  display: flex; gap: 30px; justify-content: center; flex-wrap: wrap;
+  margin-top: 16px; font-size: 15px; color: var(--ink-soft);
+}
+.exam-head .meta b { color: var(--ink); }
+#clock { font-family: var(--font-num); }
+
+/* ---------- 大题 ---------- */
+.sec { margin-bottom: 40px; }
+.sec-name {
+  font-family: var(--font-brush); font-size: 25px; font-weight: 700;
+  padding-bottom: 8px; border-bottom: 2.5px solid var(--ink); margin-bottom: 10px;
+}
+.sec-hint { font-size: 14.5px; color: var(--ink-soft); margin-bottom: 20px; line-height: 1.7; }
+.grp-label {
+  font-family: var(--font-brush); font-size: 18px; margin: 24px 0 12px;
+  padding-left: 12px; border-left: 5px solid var(--cinnabar);
+}
+
+/* ---------- 题目 ---------- */
+.q {
+  padding: 16px 18px; margin-bottom: 14px;
+  border: 2px solid var(--paper-edge); border-radius: 12px; background: #fffdf6;
+}
+.q.right { border-color: var(--grass); background: var(--grass-wash); }
+.q.wrong { border-color: var(--cinnabar); background: var(--cinnabar-wash); }
+
+.q-head { display: flex; gap: 12px; align-items: flex-start; }
+.q-no {
+  flex: none; width: 30px; height: 30px; display: grid; place-items: center;
+  background: var(--ink); color: var(--paper); border-radius: 8px;
+  font-family: var(--font-num); font-weight: 700; font-size: 15px;
+}
+.q-body { flex: 1; font-size: 18px; line-height: 1.85; }
+.q-pt { flex: none; font-size: 13px; color: var(--ink-faint); font-family: var(--font-num); }
+
+/* 真分数：用 middle 对齐，让分数线大致落在旁边文字的中线上，
+   否则「比较 3/7 和 5/7 的大小」里的「和」会被顶得偏高。 */
+.frac {
+  display: inline-flex; flex-direction: column; align-items: center;
+  vertical-align: middle; margin: 0 4px; font-family: var(--font-num);
+  line-height: 1.0; position: relative; top: -0.06em;
+}
+.frac .num { border-bottom: 2px solid currentColor; padding: 0 4px; font-size: .74em; }
+.frac .den { padding: 0 4px; font-size: .74em; }
+/* 含分数的行放宽一点，免得上下挤在一起 */
+.q-body, .opt .txt { line-height: 2.0; }
+
+.blank-mark {
+  display: inline-block; min-width: 62px; border-bottom: 2px solid var(--ink-faint);
+  margin: 0 4px; vertical-align: -3px;
+}
+
+/* ---------- 选择题 ---------- */
+.opts { display: grid; gap: 9px; margin: 14px 0 0 42px; }
+.opts.cols2 { grid-template-columns: 1fr 1fr; }
+@media (max-width: 640px) { .opts.cols2 { grid-template-columns: 1fr; } }
+
+.opt {
+  display: flex; align-items: center; gap: 11px; text-align: left;
+  padding: 10px 14px; border: 2px solid var(--paper-edge); border-radius: 10px;
+  background: var(--paper); cursor: pointer; font-size: 17px; font-family: var(--font-body);
+  transition: border-color .12s, background .12s;
+}
+.opt:hover:not(.locked) { border-color: var(--ink); background: var(--gold-wash); }
+.opt .key {
+  flex: none; width: 27px; height: 27px; display: grid; place-items: center;
+  border: 2px solid var(--ink-faint); border-radius: 7px;
+  font-family: var(--font-num); font-weight: 700; font-size: 14px;
+}
+.opt.picked { border-color: var(--ink); background: var(--gold-wash); }
+.opt.picked .key { background: var(--gold); border-color: var(--ink); }
+.opt.locked { cursor: default; }
+.opt.is-right { border-color: var(--grass); background: var(--grass-wash); }
+.opt.is-right .key { background: var(--grass); color: #fff; border-color: var(--grass); }
+.opt.is-wrong { border-color: var(--cinnabar); background: var(--cinnabar-wash); }
+.opt.is-wrong .key { background: var(--cinnabar); color: #fff; border-color: var(--cinnabar); }
+
+/* ---------- 填空 ---------- */
+.blanks { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0 0 42px; }
+.blanks .bn { font-size: 14px; color: var(--ink-faint); font-family: var(--font-num); }
+.blank {
+  width: 130px; padding: 8px 12px; font-size: 19px;
+  font-family: var(--font-num); text-align: center;
+  border: 2px solid var(--ink-faint); border-radius: 8px; background: #fff; color: var(--ink);
+}
+.blank:focus { outline: none; border-color: var(--cinnabar); background: var(--gold-wash); }
+.blank.ok { border-color: var(--grass); background: var(--grass-wash); }
+.blank.no { border-color: var(--cinnabar); background: var(--cinnabar-wash); }
+.blanks .unit { font-size: 16px; color: var(--ink-soft); }
+
+/* ---------- 判分反馈 ---------- */
+.verdict { margin: 14px 0 0 42px; padding: 12px 15px; border-radius: 10px; background: rgba(255,255,255,.7); }
+.verdict b { font-family: var(--font-brush); font-size: 17px; }
+.verdict.ok b { color: var(--grass); }
+.verdict.no b { color: var(--cinnabar); }
+.verdict .ra { margin-top: 6px; font-size: 16px; }
+.verdict .why { margin-top: 8px; font-size: 15px; line-height: 1.8; color: var(--ink-soft); }
+
+/* ---------- 交卷条 ---------- */
+.submit-bar {
+  position: sticky; bottom: 0; display: flex; align-items: center; gap: 16px;
+  padding: 14px 20px; margin-top: 30px;
+  background: var(--paper-warm); border: 3px solid var(--ink); border-radius: 16px;
+  box-shadow: 0 -4px 0 rgba(43,38,33,.1);
+}
+.submit-bar .left { flex: 1; font-size: 15px; }
+.submit-bar .warn { color: var(--cinnabar); font-weight: 700; }
+.submit-bar .ok { color: var(--grass); font-weight: 700; }
+.btn-submit { font-size: 19px; padding: 12px 30px; }
+
+/* ---------- 成绩报告 ---------- */
+.report {
+  border: 3px solid var(--ink); border-radius: 20px; background: var(--paper-warm);
+  box-shadow: 6px 6px 0 var(--ink); padding: 26px 30px; margin-bottom: 34px;
+}
+.score-hero { text-align: center; padding-bottom: 18px; border-bottom: 2px solid var(--paper-edge); }
+.score-hero .big { font-family: var(--font-num); font-size: 82px; font-weight: 700; line-height: 1.05; }
+.score-hero .big small { font-size: 30px; color: var(--ink-faint); }
+.score-hero .lv { font-family: var(--font-brush); font-size: 21px; margin-top: 6px; }
+
+.sec-table { width: 100%; border-collapse: collapse; margin: 18px 0 6px; }
+.sec-table th, .sec-table td { padding: 9px 12px; text-align: left; border-bottom: 1.5px solid var(--paper-edge); }
+.sec-table th { font-family: var(--font-brush); font-size: 15px; color: var(--ink-soft); }
+.sec-table .num { font-family: var(--font-num); font-weight: 700; }
+
+.weak { margin-top: 18px; }
+.weak h3 { font-family: var(--font-brush); font-size: 19px; margin-bottom: 10px; }
+.weak-row {
+  display: flex; justify-content: space-between; padding: 8px 12px; margin-bottom: 6px;
+  background: var(--cinnabar-wash); border-left: 5px solid var(--cinnabar); border-radius: 8px;
+  font-size: 15.5px;
+}
+.weak-row .n { font-family: var(--font-num); color: var(--cinnabar-deep); }
+
+.report-acts { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* ---------- 打印 ---------- */
+@media print {
+  .exam-top, .submit-bar, .report-acts { display: none !important; }
+  body { background: #fff; }
+  body::before { display: none; }
+  .exam-wrap { max-width: none; padding: 0; }
+  .q { break-inside: avoid; border-color: #bbb; background: #fff; }
+  .q.right, .q.wrong { background: #fff; }
+  .opt { background: #fff; }
+  .blank { border-bottom: 1.5px solid #333; border-top: none; border-left: none; border-right: none; border-radius: 0; }
+  .report { box-shadow: none; }
+  .sec { break-inside: auto; }
+}
