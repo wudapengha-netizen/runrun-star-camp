@@ -10,7 +10,7 @@
   var startAt = 0;
   var timer = null;
   var submitted = false;
-  var KEY = 'runrun.exam.math.v1';
+  var KEY = 'runrun.exam.v1';        // boot 时会按卷子 id 改成各自独立的键
 
   function el(t, c, h) { var d = document.createElement(t); if (c) d.className = c; if (h !== undefined) d.innerHTML = h; return d; }
   function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -103,10 +103,20 @@
       box.appendChild(el('h2', 'sec-name', esc(sec.name)));
       if (sec.hint) box.appendChild(el('div', 'sec-hint', rich(sec.hint)));
 
-      var lists = sec.groups ? sec.groups.map(function (g) { return { label: g.label, items: g.items }; })
-                             : [{ label: null, items: sec.items }];
+      var lists = sec.groups ? sec.groups.map(function (g) {
+                                 return { label: g.label, items: g.items, passage: g.passage, source: g.source };
+                               })
+                             : [{ label: null, items: sec.items, passage: sec.passage, source: sec.source }];
       lists.forEach(function (L) {
         if (L.label) box.appendChild(el('div', 'grp-label', rich(L.label)));
+        // 阅读理解的短文：先把文章摆出来，后面的小题都针对它
+        if (L.passage) {
+          var pv = el('div', 'passage-box');
+          pv.innerHTML = L.passage.split('\n').map(function (p) {
+            return '<p>' + rich(p) + '</p>';
+          }).join('') + (L.source ? '<div class="src">' + rich(L.source) + '</div>' : '');
+          box.appendChild(pv);
+        }
         L.items.forEach(function () {
           box.appendChild(renderQ(Q[qi])); qi++;
         });
@@ -155,12 +165,20 @@
       wrap.appendChild(opts);
     } else {
       var row = el('div', 'blanks');
-      q.a.forEach(function (_, i) {
+      q.a.forEach(function (acc, i) {
         if (q.a.length > 1) row.appendChild(el('span', 'bn', '(' + (i + 1) + ')'));
         var inp = el('input', 'blank');
         inp.type = 'text';
         inp.autocomplete = 'off';
         inp.dataset.i = i;
+        // 框宽跟着标准答案的长度走 —— 默写「白云生处有人家」这种
+        // 七个字的句子，塞进 130px 的小框里根本没法写
+        var len = String((acc && acc[0]) || '').length;
+        if (len > 3) {
+          inp.style.width = Math.min(560, 78 + len * 30) + 'px';
+          inp.style.fontFamily = 'var(--font-brush)';
+          inp.style.textAlign = 'left';
+        }
         inp.oninput = function () { if (!submitted) { save(); updateProgress(); } };
         row.appendChild(inp);
         if (q.unit) row.appendChild(el('span', 'unit', q.unit));
@@ -382,8 +400,10 @@
 
   /* ---------- 启动 ---------- */
   function boot() {
-    E = window.EXAM_MATH;
+    E = window.EXAM_PAPER || window.EXAM_MATH || window.EXAM_CHINESE;
     if (!E) { document.getElementById('paper').innerHTML = '<p>试卷数据没加载成功。</p>'; return; }
+    // ⚠️ 每份卷子用各自的存档键，否则做语文会把数学的作答覆盖掉
+    KEY = 'runrun.exam.' + (E.id || 'paper') + '.v1';
     flatten();
     startAt = Date.now();
     render();

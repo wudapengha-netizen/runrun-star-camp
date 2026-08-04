@@ -97,12 +97,16 @@
 .opt.is-wrong .key { background: var(--cinnabar); color: #fff; border-color: var(--cinnabar); }
 
 /* ---------- 填空 ---------- */
-.blanks { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0 0 42px; }
+.blanks { display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+          margin: 14px 0 0 42px; max-width: calc(100% - 42px); }
 .blanks .bn { font-size: 14px; color: var(--ink-faint); font-family: var(--font-num); }
 .blank {
   width: 130px; padding: 8px 12px; font-size: 19px;
   font-family: var(--font-num); text-align: center;
   border: 2px solid var(--ink-faint); border-radius: 8px; background: #fff; color: var(--ink);
+  /* flex 默认会压缩子项：默写题的宽框会被挤窄，而且挤不动时把页面撑出横向滚动条。
+     flex:none 让它保持设定宽度，max-width 保证再宽也不会溢出容器（改成换行）。 */
+  flex: none; max-width: 100%;
 }
 .blank:focus { outline: none; border-color: var(--cinnabar); background: var(--gold-wash); }
 .blank.ok { border-color: var(--grass); background: var(--grass-wash); }
@@ -167,4 +171,19 @@
   .blank { border-bottom: 1.5px solid #333; border-top: none; border-left: none; border-right: none; border-radius: 0; }
   .report { box-shadow: none; }
   .sec { break-inside: auto; }
+}
+
+/* ---------- 阅读理解的短文 ---------- */
+.passage-box {
+  border: 2px solid var(--paper-edge); border-left: 8px solid var(--jade);
+  border-radius: 12px; background: #fffdf5;
+  padding: 20px 24px; margin: 14px 0 22px;
+}
+.passage-box p {
+  font-family: var(--font-brush); font-size: 18.5px; line-height: 2.1;
+  text-indent: 2em; margin: 0 0 8px;
+}
+.passage-box p:last-of-type { margin-bottom: 0; }
+.passage-box .src {
+  margin-top: 12px; text-align: right; font-size: 14px; color: var(--ink-faint);
 }
