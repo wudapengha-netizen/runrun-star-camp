@@ -42,7 +42,52 @@
     }, 250);
   }
 
-  function available() { return !!synth && (!!zhVoice || !!enVoice); }
+  function available() { return !!synth && (!!zhVoice || !!enVoice || hasClips()); }
+
+  /* ---------- 预生成的英语音频 ----------
+     Chrome 在很多 Windows 上只暴露中文语音包（这台就是），
+     直接让 speechSynthesis 念英文会用中文引擎发音，孩子会学错。
+     所以英语一律优先播放 audio/en/ 下预先用 Zira 生成好的 mp3。 */
+  var clipAudio = null;
+
+  function hasClips() {
+    return !!(window.AUDIO_EN && Object.keys(window.AUDIO_EN).length);
+  }
+
+  function clipFor(text) {
+    if (!window.AUDIO_EN) return null;
+    var k = window.AUDIO_EN[String(text || '').trim()];
+    return k ? ('audio/en/' + k + '.mp3') : null;
+  }
+
+  /** 播放预生成音频；返回 true 表示已接管，false 表示没有对应文件 */
+  function playClip(text, opt) {
+    opt = opt || {};
+    var src = clipFor(text);
+    if (!src) return false;
+    stopClip();
+    clipAudio = new Audio(src);
+    clipAudio.playbackRate = opt.rate || 1;
+    clipAudio.onended = function () { if (opt.onend) opt.onend(); };
+    clipAudio.onerror = function () {
+      // 文件缺失就退回浏览器语音，不要静默失败
+      clipAudio = null;
+      speakSynth(text, opt);
+    };
+    clipAudio.play().catch(function () {
+      clipAudio = null;
+      speakSynth(text, opt);
+    });
+    return true;
+  }
+
+  function stopClip() {
+    if (clipAudio) { try { clipAudio.pause(); } catch (e) {} clipAudio = null; }
+  }
+
+  /** 英语是否有把握读准：有预生成音频，或者真有英语语音包 */
+  function englishOK(text) { return !!clipFor(text) || !!enVoice; }
+
 
   function isEnglish(text) {
     // 没有汉字就当成英文
@@ -54,6 +99,7 @@
   }
 
   function stop() {
+    stopClip();
     if (synth) try { synth.cancel(); } catch (e) {}
   }
 
@@ -63,6 +109,14 @@
    * @param {object} opt  { lang:'zh'|'en'|auto, rate, onend, onstart }
    */
   function speak(text, opt) {
+    opt = opt || {};
+    var en = opt.lang ? opt.lang === 'en' : isEnglish(text);
+    // 英语优先用预生成音频（发音准），中文才走浏览器语音
+    if (en) { stop(); if (playClip(text, opt)) return; }
+    return speakSynth(text, opt);
+  }
+
+  function speakSynth(text, opt) {
     opt = opt || {};
     if (!synth || !text) { if (opt.onend) opt.onend(); return; }
     stop();
@@ -147,6 +201,7 @@
   window.TTS = {
     speak: speak, speakSequence: speakSequence, speakTwice: speakTwice,
     stop: stop, available: available, splitSentences: splitSentences,
+    hasClip: function (t) { return !!clipFor(t); }, englishOK: englishOK,
     get zh() { return zhVoice; }, get en() { return enVoice; }
   };
 })();

@@ -187,3 +187,19 @@
 .passage-box .src {
   margin-top: 12px; text-align: right; font-size: 14px; color: var(--ink-faint);
 }
+
+/* ---------- 听力题 ---------- */
+.listen-row { margin: 14px 0 0 42px; }
+.listen-play {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--font-brush); font-size: 18px;
+  padding: 11px 24px; border: 2.5px solid var(--ink); border-radius: 999px;
+  background: var(--jade); color: #fff; cursor: pointer;
+  box-shadow: 3px 3px 0 var(--ink);
+  transition: transform .12s, box-shadow .12s;
+}
+.listen-play:hover  { transform: translate(-1.5px,-1.5px); box-shadow: 4.5px 4.5px 0 var(--ink); }
+.listen-play:active { transform: translate(2px,2px); box-shadow: 0 0 0 var(--ink); }
+.listen-play.playing { animation: sonar 1.1s ease-out infinite; }
+.listen-row .no-tts { margin-top: 8px; font-size: 15px; color: var(--cinnabar); }
+@media print { .listen-play { display: none; } }

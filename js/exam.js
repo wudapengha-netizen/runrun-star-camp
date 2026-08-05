@@ -37,6 +37,8 @@
     s = s.replace(/\s+/g, '');
     // 去掉结尾的单位和标点（答案本身要求只填数字时）
     s = s.replace(/[。，,、；;：:！!？?]/g, '');
+    // 英文句子答案常带句末句号，去掉它；只去结尾的，避免把 1.5 变成 15
+    s = s.replace(/\.+$/, '');
     // 分数写法统一：二分之一 / 1/2 / 1÷2
     s = s.replace(/÷/g, '/');
     var cn = { 零: '0', 一: '1', 二: '2', 两: '2', 三: '3', 四: '4', 五: '5',
@@ -73,8 +75,9 @@
           no++;
           Q.push({
             no: no, sec: si, secName: sec.name, group: L.group,
-            type: sec.type, per: L.per || sec.per,
-            q: it.q, o: it.o, a: it.a, tag: it.tag, why: it.why, unit: it.unit
+            type: (L.group && L.group.type) || sec.type, per: L.per || sec.per,
+            q: it.q, o: it.o, a: it.a, tag: it.tag, why: it.why, unit: it.unit,
+            audio: it.audio
           });
         });
       });
@@ -146,7 +149,34 @@
                      '<span class="q-pt">' + q.per + '分</span>';
     wrap.appendChild(head);
 
-    if (q.type === 'choice') {
+    // 听力题：先给一个播放按钮，点一下连读两遍（真听力，不是看文字选）
+    if (q.type === 'listen') {
+      var bar = el('div', 'listen-row');
+      var play = el('button', 'listen-play');
+      play.type = 'button';
+      play.innerHTML = '<span class="ic">🔊</span><span>点我听（连读两遍）</span>';
+      var times = 0;
+      play.onclick = function () {
+        if (play.classList.contains('playing')) return;
+        play.classList.add('playing');
+        times++;
+        play.querySelector('span:last-child').textContent = '播放中…（第 ' + times + ' 次）';
+        if (window.TTS && TTS.available()) {
+          TTS.speakTwice(q.audio, { lang: 'en', onend: function () {
+            play.classList.remove('playing');
+            play.querySelector('span:last-child').textContent = '再听一遍（已听 ' + times + ' 次）';
+          }});
+        } else {
+          play.classList.remove('playing');
+          play.querySelector('span:last-child').textContent = '这台电脑没有英语语音包';
+          bar.appendChild(el('div', 'no-tts', '听力原文：' + esc(q.audio)));
+        }
+      };
+      bar.appendChild(play);
+      wrap.appendChild(bar);
+    }
+
+    if (q.type === 'choice' || q.type === 'listen') {
       var opts = el('div', 'opts' + (q.o.every(function (x) { return String(x).length <= 10; }) ? ' cols2' : ''));
       q.o.forEach(function (o, i) {
         var b = el('button', 'opt');
@@ -192,7 +222,7 @@
   function collect() {
     return Q.map(function (q) {
       var w = document.getElementById('q' + q.no);
-      if (q.type === 'choice') {
+      if (q.type === 'choice' || q.type === 'listen') {
         return w.dataset.ans === undefined ? null : Number(w.dataset.ans);
       }
       return Array.prototype.map.call(w.querySelectorAll('.blank'), function (i) { return i.value; });
@@ -212,7 +242,7 @@
       d.ans.forEach(function (a, k) {
         var q = Q[k]; if (!q || a == null) return;
         var w = document.getElementById('q' + q.no);
-        if (q.type === 'choice') {
+        if (q.type === 'choice' || q.type === 'listen') {
           w.dataset.ans = a;
           var b = w.querySelector('.opt[data-i="' + a + '"]');
           if (b) b.classList.add('picked');
@@ -247,7 +277,7 @@
     var rows = Q.map(function (q, k) {
       var got = ans[k];
       var ok, detail = [];
-      if (q.type === 'choice') {
+      if (q.type === 'choice' || q.type === 'listen') {
         ok = (got === q.a);
       } else {
         detail = q.a.map(function (acc, i) { return blankOK(got ? got[i] : '', acc); });
@@ -364,9 +394,12 @@
         '<b>' + (r.ok ? '✅ 对　+' + r.q.per + '分' : '❌ 错　0分') + '</b>' +
         (r.ok ? '' : '<div class="ra">正确答案：<b>' + right + '</b></div>') +
         (r.q.why ? '<div class="why">' + rich(r.q.why) + '</div>' : '');
+      if (r.q.type === 'listen') {
+        mark.appendChild(el('div', 'why', '听力原文：<b>' + esc(r.q.audio) + '</b>'));
+      }
       w.appendChild(mark);
 
-      if (r.q.type === 'choice') {
+      if (r.q.type === 'choice' || r.q.type === 'listen') {
         w.querySelectorAll('.opt').forEach(function (b) {
           b.classList.add('locked');
           var i = Number(b.dataset.i);
@@ -387,7 +420,11 @@
   }
 
   function answerText(q) {
-    if (q.type === 'choice') return 'ABCD'[q.a] + '. ' + rich(q.o[q.a]);
+    // ⚠️ listen 和 choice 一样，q.a 是选项下标（数字），不是答案数组。
+    //    漏掉 listen 会走到下面的 q.a.map()，直接抛异常把整个标色循环打断。
+    if (q.type === 'choice' || q.type === 'listen') {
+      return 'ABCD'[q.a] + '. ' + rich(q.o[q.a]);
+    }
     return q.a.map(function (acc) { return rich(acc[0]); }).join('　');
   }
 

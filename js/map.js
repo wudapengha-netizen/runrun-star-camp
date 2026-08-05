@@ -94,10 +94,11 @@
     tcn.style.cssText = 'font-size:18px;background:var(--cinnabar)';
     tcn.onclick = function () { SFX.play('tap'); location.href = 'exam-chinese.html'; };
     trow.appendChild(tcn);
-    var soon = el('span', 'q-sub');
-    soon.style.cssText = 'align-self:center;color:var(--ink-faint)';
-    soon.textContent = '英语的整册总测还在做';
-    trow.appendChild(soon);
+    var ten = el('button', 'btn btn-primary', '🔤 英语期末测试（一）· 全册 162 分');
+    ten.type = 'button';
+    ten.style.cssText = 'font-size:18px;background:var(--jade)';
+    ten.onclick = function () { SFX.play('tap'); location.href = 'exam-english.html'; };
+    trow.appendChild(ten);
     tests.appendChild(trow);
     wrap.appendChild(tests);
 
