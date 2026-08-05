@@ -100,6 +100,9 @@
       '</div>';
     root.appendChild(head);
 
+    // 卷首导语：补漏卷这种有针对性的卷子，先说清楚「这卷子为什么给你做」
+    if (E.intro) root.appendChild(el('div', 'exam-intro', rich(E.intro)));
+
     var qi = 0;
     E.sections.forEach(function (sec) {
       var box = el('section', 'sec');

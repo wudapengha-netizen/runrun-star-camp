@@ -102,6 +102,28 @@
     tests.appendChild(trow);
     wrap.appendChild(tests);
 
+    // —— 补漏卷入口 ——
+    // 和「整册总测」分开放：总测是摸底，补漏卷是照着错题单专门补，
+    // 目的不一样，混在一起孩子会不知道该做哪个。
+    var fix = el('div', 'card card--fold');
+    fix.style.cssText = 'margin-bottom:26px;background:linear-gradient(135deg,#fdf0e3,#f7e2cd)';
+    fix.appendChild(el('div', 'seal-title', '补漏专练'));
+    fix.appendChild(el('hr', 'rule'));
+    var fp = el('div', 'q-sub');
+    fp.innerHTML = '总测做完，哪里丢分就补哪里。' +
+                   '这些卷子<b>不考新东西</b>，只把上一次错的知识点换着花样再练一遍——' +
+                   '有讲解、有找错题、有分步提示，做完就知道到底补上了没有。';
+    fix.appendChild(fp);
+    var frow = el('div');
+    frow.style.cssText = 'display:flex;gap:14px;flex-wrap:wrap;margin-top:16px';
+    var fmath = el('button', 'btn btn-primary', '🎯 数学补漏卷（二）· 八个失分点 181 分');
+    fmath.type = 'button';
+    fmath.style.cssText = 'font-size:18px;background:var(--amber,#d98f2b)';
+    fmath.onclick = function () { SFX.play('tap'); location.href = 'exam-math2.html'; };
+    frow.appendChild(fmath);
+    fix.appendChild(frow);
+    wrap.appendChild(fix);
+
     // —— 徽章墙 ——
     var bwrap = el('div', 'card');
     bwrap.style.marginTop = '10px';
