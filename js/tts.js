@@ -60,29 +60,86 @@
     return k ? ('audio/en/' + k + '.mp3') : null;
   }
 
+  /* 全局只用一个 <audio> 元素反复播。
+     原因：Chrome 的自动播放策略只「祝福」用户点击那一刻碰过的元素。
+     如果每次播放都 new Audio()，连读第二遍时（setTimeout 850ms 之后）
+     已经脱离手势窗口，新元素的 play() 会被拒绝 —— 按钮就永远卡在「第 1 次」。 */
+  function ensureEl() {
+    if (!clipAudio) {
+      clipAudio = new Audio();
+      clipAudio.preload = 'auto';
+    }
+    return clipAudio;
+  }
+
   /** 播放预生成音频；返回 true 表示已接管，false 表示没有对应文件 */
   function playClip(text, opt) {
     opt = opt || {};
     var src = clipFor(text);
     if (!src) return false;
-    stopClip();
-    clipAudio = new Audio(src);
-    clipAudio.playbackRate = opt.rate || 1;
-    clipAudio.onended = function () { if (opt.onend) opt.onend(); };
-    clipAudio.onerror = function () {
-      // 文件缺失就退回浏览器语音，不要静默失败
-      clipAudio = null;
-      speakSynth(text, opt);
-    };
-    clipAudio.play().catch(function () {
-      clipAudio = null;
-      speakSynth(text, opt);
+    var a = ensureEl();
+    a.onended = null; a.onerror = null;
+    try { a.pause(); } catch (e) {}
+    a.src = src;
+    a.currentTime = 0;
+    a.playbackRate = opt.rate || 1;
+    a.onended = function () { if (opt.onend) opt.onend(); };
+    a.onerror = function () { if (opt.onend) opt.onend(); };
+    a.play().catch(function () {
+      // 被自动播放策略拦了或者文件有问题：别静默卡死，直接把回调走完
+      if (opt.onend) opt.onend();
     });
     return true;
   }
 
+  /** 连读两遍。复用同一个元素，第二遍只是 currentTime 归零重播。 */
+  function playClipTwice(text, opt) {
+    opt = opt || {};
+    var src = clipFor(text);
+    if (!src) return false;
+    var a = ensureEl();
+    a.onended = null; a.onerror = null;
+    try { a.pause(); } catch (e) {}
+    a.src = src;
+    a.currentTime = 0;
+    a.playbackRate = opt.rate || 1;
+
+    var round = 0, done = false, reallyPlayed = false;
+    // onend(ok)：ok=false 表示压根没出过声（被自动播放策略拦了、或文件放不了），
+    // 界面据此把原文亮出来，而不是让孩子一直点一直没反应
+    function finish() {
+      if (done) return;
+      done = true; a.onended = null; a.onplaying = null;
+      if (opt.onend) opt.onend(reallyPlayed);
+    }
+    a.onplaying = function () { reallyPlayed = true; };
+    a.onended = function () {
+      round++;
+      if (round >= 2) return finish();
+      setTimeout(function () {
+        if (done) return;
+        try { a.currentTime = 0; a.play().catch(finish); } catch (e) { finish(); }
+      }, 800);
+    };
+    a.onerror = finish;
+    a.play().catch(finish);
+    return true;
+  }
+
   function stopClip() {
-    if (clipAudio) { try { clipAudio.pause(); } catch (e) {} clipAudio = null; }
+    if (clipAudio) {
+      try { clipAudio.pause(); } catch (e) {}
+      clipAudio.onended = null;
+      clipAudio.onerror = null;
+    }
+  }
+
+  /** 预加载，免得第一次点按钮还在等网络 */
+  function preloadClips(list) {
+    (list || []).forEach(function (t) {
+      var src = clipFor(t);
+      if (src) { var a = new Audio(); a.preload = 'auto'; a.src = src; }
+    });
   }
 
   /** 英语是否有把握读准：有预生成音频，或者真有英语语音包 */
@@ -179,6 +236,8 @@
   /** 读两遍（英语听力题用） */
   function speakTwice(text, opt) {
     opt = opt || {};
+    stop();
+    if (playClipTwice(text, opt)) return;      // 有预生成音频就走它
     speak(text, {
       lang: opt.lang || 'en',
       rate: opt.rate,
@@ -202,6 +261,8 @@
     speak: speak, speakSequence: speakSequence, speakTwice: speakTwice,
     stop: stop, available: available, splitSentences: splitSentences,
     hasClip: function (t) { return !!clipFor(t); }, englishOK: englishOK,
+    clipDuration: function () { return (clipAudio && clipAudio.duration) || 0; },
+    preloadClips: preloadClips,
     get zh() { return zhVoice; }, get en() { return enVoice; }
   };
 })();

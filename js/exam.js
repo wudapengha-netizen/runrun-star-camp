@@ -154,24 +154,50 @@
       var bar = el('div', 'listen-row');
       var play = el('button', 'listen-play');
       play.type = 'button';
-      play.innerHTML = '<span class="ic">🔊</span><span>点我听（连读两遍）</span>';
-      var times = 0;
+      play.innerHTML = '<span class="ic">🔊</span><span class="lb">点我听（连读两遍）</span>';
+      var times = 0, guard = null;
+
+      function label(t) { play.querySelector('.lb').textContent = t; }
+
+      function reset(msg) {
+        clearTimeout(guard); guard = null;
+        play.classList.remove('playing');
+        label(msg || ('再听一遍（已听 ' + times + ' 次）'));
+      }
+
+      function showText() {
+        if (bar.querySelector('.no-tts')) return;
+        bar.appendChild(el('div', 'no-tts',
+          '播放不了，先看文字：<b>' + esc(q.audio) + '</b>'));
+      }
+
       play.onclick = function () {
-        if (play.classList.contains('playing')) return;
-        play.classList.add('playing');
+        // 允许中途再点一次重播 —— 别再用 playing 把按钮锁死
+        clearTimeout(guard);
+        TTS.stop();
         times++;
-        play.querySelector('span:last-child').textContent = '播放中…（第 ' + times + ' 次）';
-        if (window.TTS && TTS.available()) {
-          TTS.speakTwice(q.audio, { lang: 'en', onend: function () {
-            play.classList.remove('playing');
-            play.querySelector('span:last-child').textContent = '再听一遍（已听 ' + times + ' 次）';
-          }});
-        } else {
-          play.classList.remove('playing');
-          play.querySelector('span:last-child').textContent = '这台电脑没有英语语音包';
-          bar.appendChild(el('div', 'no-tts', '听力原文：' + esc(q.audio)));
+        play.classList.add('playing');
+        label('播放中…（第 ' + times + ' 次）');
+
+        if (!(window.TTS && (TTS.hasClip(q.audio) || TTS.available()))) {
+          reset('这台设备放不了声音'); showText(); return;
         }
+
+        var finished = false;
+        TTS.speakTwice(q.audio, { lang: 'en', onend: function (playedOk) {
+          if (finished) return; finished = true;
+          if (playedOk === false) { reset('没能出声，再试一次'); showText(); }
+          else { reset(); }
+        }});
+
+        // 看门狗：万一浏览器既不报错也不回调（自动播放被拦、语音引擎不响应），
+        // 12 秒后强制复位，并把原文亮出来，保证这道题还能做
+        guard = setTimeout(function () {
+          if (finished) return; finished = true;
+          reset('再试一次'); showText();
+        }, 12000);
       };
+
       bar.appendChild(play);
       wrap.appendChild(bar);
     }
@@ -448,6 +474,12 @@
     if (had) updateProgress();
     timer = setInterval(tick, 1000);
     tick();
+
+    // 听力音频提前拉下来，免得孩子第一次点按钮还在等网络
+    if (window.TTS && TTS.preloadClips) {
+      TTS.preloadClips(Q.filter(function (q) { return q.type === 'listen'; })
+                        .map(function (q) { return q.audio; }));
+    }
 
     window.addEventListener('beforeunload', function (e) {
       if (!submitted && answeredCount() > 0) { e.preventDefault(); e.returnValue = ''; }
