@@ -1,0 +1,151 @@
+/* ============================================================
+   syllabus.css —— 知识点总表 / 覆盖率
+   ============================================================ */
+
+.cov-hero {
+  text-align: center;
+  padding: 20px 12px 16px;
+  margin: 16px 0 20px;
+  border: 2px solid var(--line, #e0d6c6);
+  border-radius: 14px;
+  background: var(--paper-2, #fffdf7);
+}
+.cov-hero .big { font-size: 52px; font-weight: 700; line-height: 1.1; }
+.cov-hero .lb { font-size: 15px; color: var(--ink-3, #6b6155); margin-top: 6px; }
+.cov-hero .bad { color: var(--cinnabar, #c1462f); }
+
+/* ---------- 单元折叠 ---------- */
+.u-row {
+  border: 2px solid var(--line, #e0d6c6);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 9px;
+  background: var(--paper-2, #fffdf7);
+}
+.u-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 15px;
+  border: 0;
+  background: var(--paper-3, #f7f1e4);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+.u-head:hover { filter: brightness(0.97); }
+.u-head .un { font-size: 16px; font-weight: 600; flex: 1; }
+.u-head .up { font-size: 13px; color: var(--ink-4, #9a8f80); }
+.u-head .uc {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #fdeee9;
+  color: var(--cinnabar, #c1462f);
+  font-weight: 600;
+}
+.u-head .uc.full { background: #eef7ee; color: var(--grass, #4a8f4a); }
+.u-head .uc.zero { background: #fbe3de; }
+.u-head .arw { font-size: 13px; color: var(--ink-3, #6b6155); transition: transform .18s; }
+.u-row.open .u-head .arw { transform: rotate(180deg); }
+
+.u-body { display: none; padding: 6px 14px 12px; }
+.u-row.open .u-body { display: block; }
+
+/* ---------- 一条知识点 ---------- */
+.k-card {
+  padding: 12px 13px;
+  margin: 9px 0;
+  border-radius: 10px;
+  border-left: 4px solid var(--grass, #4a8f4a);
+  background: var(--paper-3, #f9f5ec);
+}
+.k-card.gap {
+  border-left-color: var(--cinnabar, #c1462f);
+  background: #fdf4f2;
+}
+.k-card .kh {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  margin-bottom: 7px;
+}
+.k-card .kid {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+  color: var(--ink-4, #9a8f80);
+  background: rgba(0, 0, 0, .05);
+  padding: 1px 6px;
+  border-radius: 5px;
+}
+.k-card .kn { font-size: 16px; font-weight: 600; flex: 1; min-width: 160px; }
+.k-card .kp { font-size: 12px; color: var(--ink-4, #9a8f80); }
+.k-card .kt { font-size: 13px; color: var(--grass, #4a8f4a); }
+.k-card.gap .kt { color: var(--cinnabar, #c1462f); }
+
+.k-card .kx, .k-card .ke {
+  font-size: 15px;
+  line-height: 1.85;
+  margin: 6px 0;
+}
+.k-card .kx {
+  padding: 9px 11px;
+  background: #fffaf0;
+  border-radius: 8px;
+  border: 1px dashed var(--gold, #c99a2e);
+  color: #4a3f2a;
+}
+.k-card .ke { color: var(--ink-3, #6b6155); font-size: 14px; }
+.k-card .lbl {
+  display: inline-block;
+  font-size: 11px;
+  padding: 1px 7px;
+  margin-right: 7px;
+  border-radius: 4px;
+  background: var(--gold, #c99a2e);
+  color: #fff;
+  vertical-align: 2px;
+}
+.k-card .ke .lbl { background: var(--ink-4, #9a8f80); }
+
+.k-card .kg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.k-card .tg {
+  font-size: 12px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line, #e0d6c6);
+  color: var(--ink-4, #9a8f80);
+}
+.k-card .tg.on {
+  border-color: #cfe6cf;
+  background: #eef7ee;
+  color: var(--grass, #4a8f4a);
+}
+.k-card .tg.alias { opacity: .75; font-style: italic; }
+
+.k-card .kk {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--ink-3, #6b6155);
+}
+.k-card .kk .bad { color: var(--cinnabar, #c1462f); }
+
+@media (prefers-color-scheme: dark) {
+  .cov-hero { background: #241f18; border-color: #3a332a; }
+  .u-row { background: #241f18; border-color: #3a332a; }
+  .u-head { background: #2b251d; }
+  .k-card { background: #221d16; }
+  .k-card.gap { background: #2a1d1a; }
+  .k-card .kx { background: #2a2317; color: #d9c9a8; }
+  .k-card .kid { background: rgba(255, 255, 255, .07); }
+}
+
+@media (max-width: 560px) {
+  .u-head { flex-wrap: wrap; gap: 6px 10px; }
+  .u-head .un { flex: 1 0 100%; }
+  .cov-hero .big { font-size: 42px; }
+}

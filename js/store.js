@@ -142,10 +142,18 @@
    * 判定标准特意定得严：错过的题，必须在<b>后来的轮次</b>里连对 2 次才算攻克，
    * 只对一次可能是碰巧记住了答案。
    */
+  function canonTag(t) {
+    var all = [window.SYLLABUS_MATH, window.SYLLABUS_CHINESE, window.SYLLABUS_ENGLISH];
+    for (var i = 0; i < all.length; i++) {
+      if (all[i] && all[i].canon) { var a = all[i].canon(t); if (a !== t) return a; }
+    }
+    return t;
+  }
+
   function tagStatus(subject) {
     var st = examStatus(subject), tags = {};
     Object.keys(st).forEach(function (qid) {
-      var m = st[qid], t = m.tag || '其他';
+      var m = st[qid], t = canonTag(m.tag || '其他');
       var g = tags[t] || (tags[t] = { tag: t, qs: [], tries: 0, wrong: 0, open: 0, fixed: 0, fresh: 0 });
       g.qs.push(m); g.tries += m.tries; g.wrong += m.wrong;
       if (m.wrong === 0) g.fresh++;                    // 从没错过

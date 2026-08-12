@@ -23,6 +23,17 @@
     english: { name: '英语', icon: '🔤' }
   };
 
+  /* tag 归一 —— 同一个知识点在不同卷子里可能叫不同名字
+     （「乘法·中间有0」和「多位数乘一位数·中间有0」是同一回事）。
+     不归一的话，按 tag 找变式题就会漏掉半个题库。 */
+  function canon(tag) {
+    var S = window.SYLLABUS_MATH, T = window.SYLLABUS_CHINESE, E = window.SYLLABUS_ENGLISH;
+    if (S && S.canon) { var a = S.canon(tag); if (a !== tag) return a; }
+    if (T && T.canon) { var b = T.canon(tag); if (b !== tag) return b; }
+    if (E && E.canon) { var c = E.canon(tag); if (c !== tag) return c; }
+    return tag;
+  }
+
   /* ---------- 题库：把所有卷子摊成一道道带 qid 的题 ---------- */
   function buildBank() {
     var bank = [];
@@ -39,7 +50,8 @@
                 subject: P.subject, paper: P.id, paperTitle: P.title,
                 type: L.type || sec.type, per: L.per || sec.per,
                 secName: sec.name,
-                q: it.q, o: it.o, a: it.a, tag: it.tag || '其他',
+                q: it.q, o: it.o, a: it.a,
+                tag: canon(it.tag || '其他'), rawTag: it.tag || '其他',
                 why: it.why, unit: it.unit, audio: it.audio
               });
             });
@@ -90,11 +102,11 @@
 
     // 出问题的知识点
     var weakTags = {};
-    g1.forEach(function (b) { weakTags[b.tag] = (weakTags[b.tag] || 0) + 1; });
+    g1.forEach(function (b) { weakTags[canon(b.tag)] = (weakTags[canon(b.tag)] || 0) + 1; });
 
     // ② 同知识点的变式题：优先没做过的，其次做过但没稳住的
     var variants = bank.filter(function (b) {
-      return weakTags[b.tag] && !used[b.qid];
+      return weakTags[canon(b.tag)] && !used[b.qid];
     });
     var fresh = variants.filter(function (b) { return !st[b.qid]; });
     var again = variants.filter(function (b) { return st[b.qid] && st[b.qid].streak < 2; });
@@ -111,10 +123,10 @@
 
     // ③ 新题：没做过的，优先没考过的知识点，约占两成
     var doneTags = {};
-    Object.keys(st).forEach(function (k) { if (st[k].tag) doneTags[st[k].tag] = 1; });
+    Object.keys(st).forEach(function (k) { if (st[k].tag) doneTags[canon(st[k].tag)] = 1; });
     var never = bank.filter(function (b) { return !st[b.qid] && !used[b.qid]; });
-    var newTagFirst = never.filter(function (b) { return !doneTags[b.tag]; })
-                    .concat(never.filter(function (b) { return doneTags[b.tag]; }));
+    var newTagFirst = never.filter(function (b) { return !doneTags[canon(b.tag)]; })
+                    .concat(never.filter(function (b) { return doneTags[canon(b.tag)]; }));
     var wantNew = Math.max(3, Math.round((g1.length + g2.length) * 0.2));
     var g3 = take(shuffle(newTagFirst, seed + 2), wantNew, '新题');
 
