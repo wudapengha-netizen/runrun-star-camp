@@ -26,6 +26,7 @@
 
 window.EXAM_ENGLISH = {
   id: 'english',
+  subject: 'english',
   title: '英语期末测试（一）· 三年级上册全册',
   subtitle: '人教版 PEP 2024 新版　·　共 162 分　·　建议用时 60 分钟',
   totalMinutes: 60,

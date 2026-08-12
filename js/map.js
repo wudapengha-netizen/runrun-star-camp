@@ -121,6 +121,11 @@
     fmath.style.cssText = 'font-size:18px;background:var(--amber,#d98f2b)';
     fmath.onclick = function () { SFX.play('tap'); location.href = 'exam-math2.html'; };
     frow.appendChild(fmath);
+    var fbook = el('button', 'btn btn-ghost', '📕 错题本 · 看错了哪些题');
+    fbook.type = 'button';
+    fbook.style.fontSize = '18px';
+    fbook.onclick = function () { SFX.play('tap'); location.href = 'wrongbook.html'; };
+    frow.appendChild(fbook);
     fix.appendChild(frow);
     wrap.appendChild(fix);
 

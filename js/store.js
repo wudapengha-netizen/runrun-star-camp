@@ -16,7 +16,13 @@
     streak: 0,
     lastCheckIn: null, // "2026-08-01"
     checkIns: [],      // ["2026-08-01", ...]
-    exams: {},         // { chinese:{score, detail, at}, ... }
+    exams: {},         // { chinese:{score, detail, at}, ... }（旧字段，保留兼容）
+    /* 试卷数据库 —— 每交一次卷记一条，逐题存下对错。
+       这是「循环测试」的地基：下一轮考什么，全靠翻这里。
+       {id, paper, subject, title, round, at, ms, score, total,
+        items:[{qid, no, tag, secName, type, per, ok, got, want, q}]}
+       qid 形如 'math#17'，跨卷稳定 —— 同一道题在第几轮出现都认得出来。 */
+    examLog: [],
     /* 逐题流水账 —— 每答一题记一条，这是"记忆数据库"的本体。
        {ts, day, stage, subject, qid, type, tags[], ok, ms} 全月约 1400 条。 */
     journal: [],
@@ -77,6 +83,85 @@
   function adopt(data) {
     hydrate(data);
     if (window.App && App.refreshHUD) App.refreshHUD();
+  }
+
+  /* ---------- 试卷数据库 ---------- */
+
+  /** 交卷时把整张卷子的逐题结果存进来（会同步到云端，换电脑也在） */
+  function recordExam(res) {
+    if (!Array.isArray(state.examLog)) state.examLog = [];
+    var rec = {
+      id: res.paper + '@' + Date.now(),
+      paper: res.paper, subject: res.subject, title: res.title,
+      round: res.round || 1,
+      at: Date.now(), ms: res.ms || 0,
+      score: res.score, total: res.total,
+      items: res.items || []
+    };
+    state.examLog.push(rec);
+    if (state.examLog.length > 300) state.examLog.splice(0, state.examLog.length - 300);
+
+    // 顺手写进逐题流水账，家长端按知识点统计时就能把考试也算进去
+    rec.items.forEach(function (it) {
+      logAnswer({ day: 0, stage: 'exam', subject: res.subject, qid: it.qid,
+                  type: it.type, tags: it.tag ? [it.tag] : [], ok: it.ok, ms: 0 });
+    });
+    save();
+    return rec;
+  }
+
+  function examLog(subject) {
+    var all = (state.examLog || []).slice().sort(function (a, b) { return a.at - b.at; });
+    return subject ? all.filter(function (r) { return r.subject === subject; }) : all;
+  }
+
+  /**
+   * 每道题的「当前状态」——循环出题就是查这张表。
+   * @returns { qid: {qid, tag, tries, wrong, lastOk, lastAt, lastGot, streak, q, paper} }
+   *   streak = 最近连续答对几次（连对 2 次才算真的攻克）
+   */
+  function examStatus(subject) {
+    var map = {};
+    examLog(subject).forEach(function (rec) {
+      rec.items.forEach(function (it) {
+        var m = map[it.qid] || (map[it.qid] = {
+          qid: it.qid, tag: it.tag, q: it.q, paper: rec.paper,
+          tries: 0, wrong: 0, streak: 0, lastOk: null, lastAt: 0, lastGot: ''
+        });
+        m.tries++;
+        if (it.ok) { m.streak++; } else { m.wrong++; m.streak = 0; }
+        m.lastOk = it.ok; m.lastAt = rec.at; m.lastGot = it.got;
+        if (it.tag) m.tag = it.tag;
+      });
+    });
+    return map;
+  }
+
+  /**
+   * 知识点掌握情况。
+   * 判定标准特意定得严：错过的题，必须在<b>后来的轮次</b>里连对 2 次才算攻克，
+   * 只对一次可能是碰巧记住了答案。
+   */
+  function tagStatus(subject) {
+    var st = examStatus(subject), tags = {};
+    Object.keys(st).forEach(function (qid) {
+      var m = st[qid], t = m.tag || '其他';
+      var g = tags[t] || (tags[t] = { tag: t, qs: [], tries: 0, wrong: 0, open: 0, fixed: 0, fresh: 0 });
+      g.qs.push(m); g.tries += m.tries; g.wrong += m.wrong;
+      if (m.wrong === 0) g.fresh++;                    // 从没错过
+      else if (m.streak >= 2) g.fixed++;               // 错过，但后来连对 2 次 → 攻克
+      else g.open++;                                   // 错过，还没稳住
+    });
+    return Object.keys(tags).map(function (k) { return tags[k]; })
+      .sort(function (a, b) { return (b.open - a.open) || (b.wrong - a.wrong); });
+  }
+
+  /** 还没攻克的题（最近一次答错，或者错过但还没连对 2 次） */
+  function openWrong(subject) {
+    var st = examStatus(subject);
+    return Object.keys(st).map(function (k) { return st[k]; })
+      .filter(function (m) { return m.wrong > 0 && m.streak < 2; })
+      .sort(function (a, b) { return b.lastAt - a.lastAt; });
   }
 
   /* ---------- 逐题流水账 ---------- */
@@ -333,6 +418,8 @@
   window.Store = {
     load: load, boot: boot, save: save, adopt: adopt,
     logAnswer: logAnswer, journalByTag: journalByTag,
+    recordExam: recordExam, examLog: examLog, examStatus: examStatus,
+    tagStatus: tagStatus, openWrong: openWrong,
     get state() { return state; },
     todayStr: todayStr, dayNumberFor: dayNumberFor,
     dayRec: dayRec, isStageDone: isStageDone, isDayDone: isDayDone, isUnlocked: isUnlocked,

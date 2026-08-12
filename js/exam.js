@@ -74,6 +74,9 @@
         L.items.forEach(function (it) {
           no++;
           Q.push({
+            // qid 跨卷稳定：同一道题以后在第几轮出现，都能认出是它。
+            // 循环卷里的题带 src（原始出处），直接沿用，历史才连得上。
+            qid: it.src || ((E.id || 'paper') + '#' + no),
             no: no, sec: si, secName: sec.name, group: L.group,
             type: (L.group && L.group.type) || sec.type, per: L.per || sec.per,
             q: it.q, o: it.o, a: it.a, tag: it.tag, why: it.why, unit: it.unit,
@@ -328,7 +331,49 @@
     clearInterval(timer);
     var rows = grade();
     save();
+    recordToDB(rows);
     showReport(rows);
+  }
+
+  /* 把整张卷子的逐题结果写进跨设备的试卷数据库。
+     以前成绩只落在 localStorage，换台电脑就没了，家长也看不到错在哪。 */
+  function recordToDB(rows) {
+    if (!(window.Store && Store.recordExam)) return;
+    try {
+      var items = rows.map(function (r) {
+        var q = r.q;
+        var got;
+        if (q.type === 'choice' || q.type === 'listen') {
+          got = (r.got == null) ? '（没答）' : ('ABCD'[r.got] + '. ' + String(q.o[r.got]).replace(/<[^>]+>/g, ''));
+        } else {
+          got = (r.got || []).map(function (x) { return String(x || '').trim() || '（空）'; }).join(' / ');
+        }
+        var want;
+        if (q.type === 'choice' || q.type === 'listen') {
+          want = 'ABCD'[q.a] + '. ' + String(q.o[q.a]).replace(/<[^>]+>/g, '');
+        } else {
+          want = q.a.map(function (acc) { return acc[0]; }).join(' / ');
+        }
+        return {
+          qid: q.qid, no: q.no, tag: q.tag || '', secName: q.secName,
+          type: q.type, per: q.per, ok: r.ok,
+          // 题干存 90 字够错题本显示了，全文本来就在卷子数据里
+          q: String(q.q).replace(/<[^>]+>/g, '').slice(0, 90),
+          got: got.slice(0, 60), want: want.slice(0, 60), why: q.why || ''
+        };
+      });
+      Store.recordExam({
+        paper: E.id || 'paper',
+        subject: E.subject || (E.id || '').replace(/[0-9].*$|-r\d+$/, '') || 'other',
+        title: E.title, round: E.round || 1,
+        ms: Date.now() - startAt,
+        score: rows.reduce(function (a, r) { return a + r.score; }, 0),
+        total: rows.reduce(function (a, r) { return a + r.q.per; }, 0),
+        items: items
+      });
+    } catch (e) {
+      console.warn('成绩入库失败（不影响本次评分）', e);
+    }
   }
 
   /* ---------- 成绩报告 ---------- */
@@ -473,6 +518,14 @@
     flatten();
     startAt = Date.now();
     render();
+
+    // 把云端存档拉起来 —— 交卷时才有地方写，也才能跨电脑看到错题。
+    // 异步进行，拉不到也不影响做卷子（大不了只存本机）。
+    if (window.Store && Store.boot) {
+      Store.boot((window.PROFILE && PROFILE.name) || '').catch(function (e) {
+        console.warn('存档层没连上，成绩只存本机', e);
+      });
+    }
     var had = restore();
     if (had) updateProgress();
     timer = setInterval(tick, 1000);

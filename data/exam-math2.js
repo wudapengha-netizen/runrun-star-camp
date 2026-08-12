@@ -27,6 +27,7 @@
 
 window.EXAM_MATH2 = {
   id: 'math2',
+  subject: 'math',
   title: '数学补漏卷（二）· 专攻八个失分点',
   subtitle: '人教版三年级上册　·　共 181 分　·　建议用时 60 分钟',
   totalMinutes: 60,

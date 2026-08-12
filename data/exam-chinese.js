@@ -21,6 +21,7 @@
 
 window.EXAM_CHINESE = {
   id: 'chinese',
+  subject: 'chinese',
   title: '语文期末测试（一）· 三年级上册全册',
   subtitle: '部编版 2024 新版　·　共 152 分　·　建议用时 90 分钟',
   totalMinutes: 90,

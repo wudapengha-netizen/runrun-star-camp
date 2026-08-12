@@ -17,6 +17,7 @@
 
 window.EXAM_MATH = {
   id: 'math',
+  subject: 'math',
   title: '数学期末测试（一）· 三年级上册全册',
   subtitle: '人教版 2024 新版　·　共 150 分　·　建议用时 80 分钟',
   totalMinutes: 80,
