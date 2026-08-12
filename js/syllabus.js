@@ -29,21 +29,30 @@
   var BOOKS = [window.SYLLABUS_MATH, window.SYLLABUS_CHINESE, window.SYLLABUS_ENGLISH]
               .filter(Boolean);
 
-  /* 试卷里用到的 tag → 出现次数 */
-  function usedTags(subject) {
-    var used = {};
+  /* 试卷里用到的 tag，用 canon 归一到「正名」后再计数。
+     不归一的话，卷子写「多位数乘一位数·中间有0」而清单叫「乘法·中间有0」，
+     就会被当成没考过 —— 覆盖率整片变 0。 */
+  function usedTags(S) {
+    var used = {}, raw = {};
     (window.PAPERS || []).forEach(function (P) {
-      if (!P || P.subject !== subject) return;
+      if (!P || P.subject !== S.subject) return;
       P.sections.forEach(function (sec) {
         (sec.groups || [{ items: sec.items }]).forEach(function (L) {
           (L.items || []).forEach(function (it) {
-            if (it.tag) used[it.tag] = (used[it.tag] || 0) + 1;
+            if (!it.tag) return;
+            raw[it.tag] = (raw[it.tag] || 0) + 1;
+            var c = S.canon ? S.canon(it.tag) : it.tag;
+            used[c] = (used[c] || 0) + 1;
           });
         });
       });
     });
+    used._raw = raw;
     return used;
   }
+
+  /* 这条知识点考过没有：看它的正名 tag 有没有被用到 */
+  function hitCount(p, used) { return used[p.tag] || 0; }
 
   function tone(p) {
     return p >= 80 ? 'var(--grass, #4a8f4a)'
@@ -62,7 +71,7 @@
     }
 
     BOOKS.forEach(function (S) {
-      var used = usedTags(S.subject);
+      var used = usedTags(S);
       var byTag = {};
       try {
         (Store.tagStatus(S.subject) || []).forEach(function (t) { byTag[t.tag] = t; });
@@ -72,7 +81,7 @@
       S.units.forEach(function (u) {
         u.points.forEach(function (p) {
           total++;
-          if ((p.tags || []).some(function (t) { return used[t]; })) done++;
+          if (hitCount(p, used)) done++;
         });
       });
 
@@ -93,7 +102,7 @@
         var un = 0, uc = 0;
         u.points.forEach(function (p) {
           un++;
-          if ((p.tags || []).some(function (t) { return used[t]; })) uc++;
+          if (hitCount(p, used)) uc++;
         });
 
         var row = el('div', 'u-row');
@@ -108,21 +117,23 @@
 
         var body = el('div', 'u-body');
         u.points.forEach(function (p) {
-          var hit = (p.tags || []).filter(function (t) { return used[t]; });
-          var n = hit.reduce(function (a, t) { return a + used[t]; }, 0);
-          var k = byTag[(p.tags || [])[0]];
-          var c = el('div', 'k-card' + (hit.length ? '' : ' gap'));
+          var n = hitCount(p, used);
+          var k = byTag[p.tag];
+          var c = el('div', 'k-card' + (n ? '' : ' gap'));
           c.innerHTML =
             '<div class="kh"><span class="kid">' + esc(p.id) + '</span>' +
             '<span class="kn">' + esc(p.point) + '</span>' +
             '<span class="kp">教材 p' + p.page + '</span>' +
-            '<span class="kt">' + (hit.length ? ('已出 ' + n + ' 题') : '<b>没考过</b>') + '</span></div>' +
+            '<span class="kt">' + (n ? ('已出 ' + n + ' 题') : '<b>没考过</b>') + '</span></div>' +
             (p.text ? '<div class="kx"><span class="lbl">教材原文</span>' + rich(p.text) + '</div>' : '') +
             (p.eg ? '<div class="ke"><span class="lbl">例</span>' + rich(p.eg) + '</div>' : '') +
-            '<div class="kg">' + (p.tags || []).map(function (t, i) {
-              return '<span class="tg' + (i ? ' alias' : '') + (used[t] ? ' on' : '') + '">' +
-                     esc(t) + (i ? '（别名）' : '') + '</span>';
-            }).join('') + '</div>' +
+            '<div class="kg">' +
+              '<span class="tg' + (n ? ' on' : '') + '">' + esc(p.tag) + '</span>' +
+              (p.alias || []).map(function (a) {
+                return '<span class="tg alias' + (used._raw[a] ? ' on' : '') + '">' +
+                       esc(a) + '（别名）</span>';
+              }).join('') +
+            '</div>' +
             (k ? '<div class="kk">润润：做过 ' + k.tries + ' 次，错 ' + k.wrong + ' 次' +
                  (k.open ? '　<b class="bad">还有 ' + k.open + ' 道没攻克</b>' : '　已攻克 ✓') + '</div>' : '');
           body.appendChild(c);
