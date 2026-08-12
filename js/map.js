@@ -121,6 +121,16 @@
     fmath.style.cssText = 'font-size:18px;background:var(--amber,#d98f2b)';
     fmath.onclick = function () { SFX.play('tap'); location.href = 'exam-math2.html'; };
     frow.appendChild(fmath);
+    var fm3 = el('button', 'btn btn-primary', '🧩 补漏卷（三）· 上半册补全 103 分');
+    fm3.type = 'button';
+    fm3.style.cssText = 'font-size:18px;background:var(--amber,#d98f2b)';
+    fm3.onclick = function () { SFX.play('tap'); location.href = 'exam-math3.html'; };
+    frow.appendChild(fm3);
+    var fm4 = el('button', 'btn btn-primary', '🏁 补漏卷（四）· 下半册补全 100 分');
+    fm4.type = 'button';
+    fm4.style.cssText = 'font-size:18px;background:var(--amber,#d98f2b)';
+    fm4.onclick = function () { SFX.play('tap'); location.href = 'exam-math4.html'; };
+    frow.appendChild(fm4);
     var fsyl = el('button', 'btn btn-ghost', '📚 知识点总表 · 看考了多少');
     fsyl.type = 'button';
     fsyl.style.fontSize = '18px';
