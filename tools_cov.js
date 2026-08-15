@@ -102,6 +102,31 @@ SUBJECTS.forEach(function (subj) {
     console.log('\n ⚠️ 一个正名被多个知识点占用（覆盖率会虚高）');
     shared.forEach(function (t) { console.log('   ' + t + ' ← ' + dup[t].join(', ')); });
   }
+
+  /* 题量太薄的知识点 —— 循环出题需要「同知识点的另一道题」。
+     只有 1 道的话，孩子错了就只能拿原题再考一遍，等于白循环。 */
+  const thin = [];
+  S.units.forEach(function (u) {
+    u.points.forEach(function (p) {
+      const n = used[p.tag] || 0;
+      if (n > 0 && n < 3) {
+        thin.push({ id: p.id, point: p.point.replace(/<[^>]+>/g, ''), tag: p.tag, n: n });
+      }
+    });
+  });
+  if (thin.length) {
+    const one = thin.filter(function (t) { return t.n === 1; });
+    const two = thin.filter(function (t) { return t.n === 2; });
+    console.log('\n ── 题量偏薄（循环出题挑不出新题，共 ' + thin.length + ' 个）──');
+    if (one.length) {
+      console.log('   ❗ 只有 1 道，错了只能重考原题（' + one.length + ' 个）：');
+      one.forEach(function (t) { console.log('      [' + t.id + '] ' + t.point + '　tag=' + t.tag); });
+    }
+    if (two.length) {
+      console.log('   · 只有 2 道（' + two.length + ' 个）：' +
+                  two.map(function (t) { return t.id; }).join(' '));
+    }
+  }
 });
 
 console.log('');

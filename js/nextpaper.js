@@ -2,17 +2,20 @@
    nextpaper.js —— 循环测试：根据上一轮的错题，拼出下一轮卷子
 
    组卷规则（页面上会把配比明明白白列出来）：
-     ① 未攻克的错题      —— 原题重考，100% 带入
-     ② 同知识点的变式题  —— 错哪个知识点，就在那个知识点上再给几道<b>不同的</b>题
-     ③ 新题              —— 没考过的题，约占两成，防止只盯着错题、别的忘了
-     ④ 防遗忘抽查        —— 从早就做对的题里随机抽几道
+     ① <b>同知识点的新题</b> —— 错哪个知识点，就在那个知识点上出<b>别的题</b>。
+        <b>不把原题复制一遍再做</b>：原题重做很可能只是记住了那个答案，
+        证明不了学会没有。换一道题做对了，才算真的会。
+     ② 随机补充           —— 从整个题库里随机抽 10~20%，每轮抽的都不一样，
+        防止只盯着错题、别的地方生疏。
+     ③ 防遗忘抽查         —— 从早就攻克的题里再抽一两道回头看。
 
-   为什么一定要有 ②：
-     只把错题原样再考一遍，孩子很可能是<b>记住了那个答案</b>，
-     而不是学会了那个方法。同知识点的变式题做对了，才算真的会。
-     所以「攻克」的判定看的是变式题，不是原题。
+   一直循环到所有知识点都攻克为止：
+     做完这一轮，还错的知识点进下一轮，直到错题清零。
 
-   题目全部来自已有的四份卷子（题库），不凭空造题。
+   ⚠️ 万一某个知识点的题库里<b>没有别的题了</b>（只有原来那一道），
+      才会退回用原题，并在卷子上注明 —— 这种情况说明该给这个知识点补题了。
+
+   题目全部来自已有的九份卷子（题库），不凭空造题。
    ============================================================ */
 (function () {
   'use strict';
@@ -92,66 +95,83 @@
       return out;
     }
 
-    // ① 未攻克的错题
-    var openIds = {};
-    var wrongs = Object.keys(st).map(function (k) { return st[k]; })
-      .filter(function (m) { return m.wrong > 0 && m.streak < 2; });
-    wrongs.forEach(function (m) { openIds[m.qid] = 1; });
-    var g1 = take(bank.filter(function (b) { return openIds[b.qid]; }),
-                  99, '错题重考');
-
-    // 出问题的知识点
-    var weakTags = {};
-    g1.forEach(function (b) { weakTags[canon(b.tag)] = (weakTags[canon(b.tag)] || 0) + 1; });
-
-    // ② 同知识点的变式题：优先没做过的，其次做过但没稳住的
-    var variants = bank.filter(function (b) {
-      return weakTags[canon(b.tag)] && !used[b.qid];
+    // —— 找出「还没攻克的知识点」，注意是<b>知识点</b>，不是题 ——
+    var wrongIds = {}, weakTags = {};
+    Object.keys(st).forEach(function (k) {
+      var m = st[k];
+      if (m.wrong > 0 && m.streak < 2) {
+        wrongIds[m.qid] = 1;
+        weakTags[canon(m.tag)] = (weakTags[canon(m.tag)] || 0) + 1;
+      }
     });
-    var fresh = variants.filter(function (b) { return !st[b.qid]; });
-    var again = variants.filter(function (b) { return st[b.qid] && st[b.qid].streak < 2; });
-    // 每个薄弱知识点最多补 3 道变式，别把一份卷子堆成一个知识点
-    var perTag = {}, pool = shuffle(fresh, seed).concat(shuffle(again, seed + 1));
-    var g2 = [];
-    pool.forEach(function (b) {
-      if ((perTag[b.tag] || 0) >= 3) return;
-      if (used[b.qid]) return;
-      perTag[b.tag] = (perTag[b.tag] || 0) + 1;
-      used[b.qid] = 1;
-      g2.push(Object.assign({}, b, { pick: '同知识点变式' }));
+    var tagList = Object.keys(weakTags);
+
+    // ① 同知识点的<b>新题</b>：明确排除做错的那些原题
+    //    优先没做过的，其次做过但还没稳住的（但都不是原来错的那道）
+    var reused = [];                    // 记下哪些知识点被迫用了原题
+    var g1 = [];
+    var perTag = {};
+    tagList.forEach(function (t) {
+      var same = bank.filter(function (b) {
+        return canon(b.tag) === t && !used[b.qid] && !wrongIds[b.qid];
+      });
+      var fresh = shuffle(same.filter(function (b) { return !st[b.qid]; }), seed + t.length);
+      var again = shuffle(same.filter(function (b) { return st[b.qid]; }), seed + t.length + 1);
+      var pool = fresh.concat(again);
+
+      // 每个薄弱知识点给 3 道新题 —— 一道说明不了问题，太多又堆成一科
+      var want = 3, got = 0;
+      for (var i = 0; i < pool.length && got < want; i++) {
+        if (used[pool[i].qid]) continue;
+        used[pool[i].qid] = 1; got++;
+        g1.push(Object.assign({}, pool[i], { pick: '同知识点新题' }));
+      }
+
+      // 题库里这个知识点没有别的题了，只能退回原题，并记下来提醒补题
+      if (got === 0) {
+        var orig = bank.filter(function (b) { return wrongIds[b.qid] && canon(b.tag) === t && !used[b.qid]; });
+        if (orig.length) {
+          used[orig[0].qid] = 1;
+          g1.push(Object.assign({}, orig[0], { pick: '原题（题库暂无同知识点新题）', fallback: true }));
+          reused.push(t);
+        }
+      }
+      perTag[t] = got;
     });
 
-    // ③ 新题：没做过的，优先没考过的知识点，约占两成
-    var doneTags = {};
-    Object.keys(st).forEach(function (k) { if (st[k].tag) doneTags[canon(st[k].tag)] = 1; });
-    var never = bank.filter(function (b) { return !st[b.qid] && !used[b.qid]; });
-    var newTagFirst = never.filter(function (b) { return !doneTags[canon(b.tag)]; })
-                    .concat(never.filter(function (b) { return doneTags[canon(b.tag)]; }));
-    var wantNew = Math.max(3, Math.round((g1.length + g2.length) * 0.2));
-    var g3 = take(shuffle(newTagFirst, seed + 2), wantNew, '新题');
+    // ② 随机补充：整个题库里随机抽 10~20%，每轮抽到的都不一样
+    //    种子跟着轮次走 —— 同一轮反复刷新是同一份卷子，换一轮就换一批题
+    //    ⚠️ 必须排除 wrongIds：不然做错的原题会被当成「随机补充」抽回来，
+    //       等于绕过了「不重考原题」这条规矩。
+    var rest = bank.filter(function (b) { return !used[b.qid] && !wrongIds[b.qid]; });
+    var wantMore = Math.max(3, Math.round(g1.length * 0.15));
+    var g2 = take(shuffle(rest, seed + 977), wantMore, '随机补充');
 
-    // ④ 防遗忘：早就做对的，抽几道回头看看还记得吗
+    // ③ 防遗忘：早就攻克的题里抽一两道回头看
     var solid = bank.filter(function (b) {
       return st[b.qid] && st[b.qid].streak >= 2 && !used[b.qid];
     });
-    var g4 = take(shuffle(solid, seed + 3), Math.min(5, Math.round(g1.length * 0.3)), '防遗忘抽查');
+    var g3 = take(shuffle(solid, seed + 1493), Math.min(3, Math.round(g1.length * 0.2)), '防遗忘抽查');
 
-    return { groups: [g1, g2, g3, g4], round: rounds + 1, bankSize: bank.length };
+    return {
+      groups: [g1, g2, g3], round: rounds + 1, bankSize: bank.length,
+      weakTags: tagList, reused: reused
+    };
   }
 
   /* ---------- 拼成 exam.js 认识的卷子结构 ---------- */
   function toPaper(subject, c) {
     var S = SUB[subject];
     var LABEL = [
-      { name: '一、上次错的，再做一遍', pick: '错题重考',
-        hint: '这些题上一轮做错了。<b>先别急着写答案，想想上次是哪一步出的问题。</b>' },
-      { name: '二、同一个知识点，换个问法', pick: '同知识点变式',
-        hint: '这些题考的知识点和上面一样，但<b>题目是新的</b>。<br>' +
-              '上面那些做对了只能说明记住了答案，<b>这些做对了才算真的会</b>。' },
-      { name: '三、新题', pick: '新题',
-        hint: '没考过的内容。只盯着错题练，别的地方容易生疏。' },
-      { name: '四、回头看看还记得吗', pick: '防遗忘抽查',
-        hint: '这些题以前做对过，隔一段时间再确认一次。' }
+      { name: '一、上次错的那些知识点，换成新题再来',
+        hint: '这些题考的是<b>你上一轮做错的知识点</b>，但<b>题目全是新的</b>——' +
+              '不是把原来那道再抄一遍。<br>' +
+              '<b>换一道题也做对了，这个知识点才算真的过关。</b>' },
+      { name: '二、随机补充',
+        hint: '从整个题库里随机抽的，每一轮抽到的都不一样。<br>' +
+              '只盯着错题练，别的地方容易生疏。' },
+      { name: '三、回头看看还记得吗',
+        hint: '这些题以前已经攻克了，隔一段时间再确认一次。' }
     ];
 
     var sections = [];
@@ -208,9 +228,9 @@
       title: S.name + '第 ' + c.round + ' 轮 · 错题攻坚卷',
       subtitle: '根据上一轮错题自动生成　·　' + n + ' 题 / ' + total + ' 分',
       totalMinutes: Math.max(20, Math.round(n * 1.2)),
-      intro: '这份卷子是<b>照着你上一轮的错题拼出来的</b>，不是随便出的。' +
-             '第一大题是原来错的那些，第二大题是<b>同一个知识点的新题目</b>——' +
-             '两边都做对了，这个知识点才算真正过关。',
+      intro: '这份卷子是<b>照着你上一轮错的知识点</b>拼出来的。<br>' +
+             '第一大题<b>不是把原来那些题再抄一遍</b>，而是同一个知识点<b>换成了新的题目</b>——' +
+             '原题做对了可能只是记住了答案，<b>换一道也做对，才算真的学会。</b>',
       sections: fixed,
       _stat: { n: n, total: total, groups: c.groups.map(function (g) { return g.length; }) }
     };
@@ -223,11 +243,10 @@
     root.innerHTML = '';
     var box = document.createElement('div');
     box.className = 'card';
-    var names = ['错题重考', '同知识点变式', '新题', '防遗忘抽查'];
-    var tips = ['上一轮做错、还没攻克的原题',
-                '同一个知识点换个问法 —— 这部分才真正检验掌握',
-                '没考过的内容，防止顾此失彼',
-                '早就做对的题，回头确认一次'];
+    var names = ['同知识点新题', '随机补充', '防遗忘抽查'];
+    var tips = ['针对上一轮错的 <b>' + (c.weakTags || []).length + ' 个知识点</b>，出的都是新题（不是原题重做）',
+                '从整个题库随机抽，每轮不同，防止顾此失彼',
+                '早已攻克的题，回头确认一次'];
     var rows = c.groups.map(function (g, i) {
       if (!g.length) return '';
       return '<tr><td>' + names[i] + '</td><td class="num"><b>' + g.length + '</b> 题</td>' +
@@ -241,6 +260,16 @@
       '<tbody>' + rows + '</tbody></table>' +
       '<p class="q-sub" style="margin-top:14px">合计 <b>' + paper._stat.n + '</b> 题、<b>' +
       paper._stat.total + '</b> 分，题目全部来自已做过的卷子题库（共 ' + c.bankSize + ' 道）。</p>';
+
+    if (c.reused && c.reused.length) {
+      var warn = document.createElement('div');
+      warn.className = 'save-bar warn';
+      warn.style.marginTop = '12px';
+      warn.innerHTML = '⚠️ 这几个知识点<b>题库里暂时没有别的题</b>，只能先用原题：<b>' +
+                       c.reused.join('、') + '</b>。<br>' +
+                       '（这说明该给它们补几道新题了 —— 告诉老师一声。）';
+      box.appendChild(warn);
+    }
 
     var row = document.createElement('div');
     row.className = 'row';

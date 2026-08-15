@@ -362,7 +362,7 @@
           got: got.slice(0, 60), want: want.slice(0, 60), why: q.why || ''
         };
       });
-      Store.recordExam({
+      var rec = Store.recordExam({
         paper: E.id || 'paper',
         subject: E.subject || (E.id || '').replace(/[0-9].*$|-r\d+$/, '') || 'other',
         title: E.title, round: E.round || 1,
@@ -371,9 +371,29 @@
         total: rows.reduce(function (a, r) { return a + r.q.per; }, 0),
         items: items
       });
+      savedOK = !!rec;
     } catch (e) {
       console.warn('成绩入库失败（不影响本次评分）', e);
+      savedOK = false;
     }
+  }
+
+  var savedOK = null;
+
+  /* 成绩报告顶部：这次成绩到底存哪儿了，说清楚 */
+  function savedNote() {
+    var st = (window.Storage2 && Storage2.status) || { mode: 'local' };
+    if (savedOK === false) {
+      return '<div class="save-bar warn" style="margin:0 0 16px">' +
+             '⚠️ <b>这次成绩没能存进记录本</b>（评分不受影响）。刷新页面重做一次即可。</div>';
+    }
+    if (st.mode === 'cloud') {
+      return '<div class="save-bar ok" style="margin:0 0 16px">' +
+             '☁️ <b>成绩已存到云端</b>，家长在任何一台电脑打开「家长端」或「错题本」都能看到。</div>';
+    }
+    return '<div class="save-bar warn" style="margin:0 0 16px">' +
+           '⚠️ <b>成绩只存在这台设备的浏览器里</b>，家长在别的电脑上看不到。<br>' +
+           '在闯关营首页输入配对码后，这些记录会自动补传到云端。</div>';
   }
 
   /* ---------- 成绩报告 ---------- */
@@ -409,6 +429,7 @@
     var color = pct >= 85 ? 'var(--grass)' : pct >= 70 ? 'var(--gold-deep)' : 'var(--cinnabar)';
 
     rep.innerHTML =
+      savedNote() +
       '<div class="score-hero">' +
       '<div class="big" style="color:' + color + '">' + got + '<small> / ' + total + '</small></div>' +
       '<div class="lv">' + level + '　·　得分率 ' + pct + '%　·　用时 ' + mins + ' 分钟</div>' +
@@ -502,6 +523,62 @@
     return q.a.map(function (acc) { return rich(acc[0]); }).join('　');
   }
 
+  /* ---------- 存档状态条 ----------
+     以前试卷页对存档只字不提：设备没配对的话，成绩只进这台浏览器，
+     家长在别的电脑上一条记录都看不到，而页面上毫无提示。 */
+  function saveBar() {
+    var bar = document.getElementById('saveBar');
+    if (!bar) {
+      bar = el('div', 'save-bar');
+      bar.id = 'saveBar';
+      var root = document.getElementById('paper');
+      var head = root.querySelector('.exam-head');
+      if (head && head.nextSibling) root.insertBefore(bar, head.nextSibling);
+      else root.insertBefore(bar, root.firstChild);
+    }
+    var st = (window.Storage2 && Storage2.status) || { mode: 'local' };
+    bar.className = 'save-bar ' + (st.mode === 'cloud' ? 'ok' : 'warn');
+
+    if (st.mode === 'cloud') {
+      bar.innerHTML = '<span>☁️ <b>成绩会自动存到云端</b>，家长在任何一台电脑上都能看到。</span>';
+      return;
+    }
+    if (st.mode === 'server') {
+      bar.innerHTML = '<span>💾 成绩会存到本地服务器。</span>';
+      return;
+    }
+
+    // local：最需要提醒的情况
+    bar.innerHTML =
+      '<span>⚠️ <b>这台设备还没和家长的账号配对</b>，成绩只会存在这个浏览器里，' +
+      '家长在别的电脑上看不到。<br>输入配对码就能同步（<b>以前做过的记录也会一起补传上去</b>）：</span>' +
+      '<span class="sp"></span>';
+    var inp = el('input');
+    inp.type = 'password';
+    inp.placeholder = '配对码';
+    inp.autocomplete = 'off';
+    var btn = el('button', 'btn btn-sm btn-primary', '配对');
+    btn.type = 'button';
+    btn.onclick = function () {
+      var k = inp.value.trim();
+      if (!k) return;
+      btn.disabled = true; btn.textContent = '连接中…';
+      Storage2.pair(k).then(function (r) {
+        if (r && r.ok) {
+          btn.textContent = '✅ 已配对';
+          Store.boot((window.PROFILE && PROFILE.name) || '').then(saveBar).catch(saveBar);
+        } else {
+          btn.disabled = false; btn.textContent = '配对';
+          inp.value = '';
+          inp.placeholder = (r && r.error) || '配对码不对';
+        }
+      }).catch(function () { btn.disabled = false; btn.textContent = '配对'; });
+    };
+    inp.onkeydown = function (e) { if (e.key === 'Enter') btn.onclick(); };
+    bar.appendChild(inp);
+    bar.appendChild(btn);
+  }
+
   /* ---------- 计时 ---------- */
   function tick() {
     var s = Math.floor((Date.now() - startAt) / 1000);
@@ -522,9 +599,13 @@
     // 把云端存档拉起来 —— 交卷时才有地方写，也才能跨电脑看到错题。
     // 异步进行，拉不到也不影响做卷子（大不了只存本机）。
     if (window.Store && Store.boot) {
-      Store.boot((window.PROFILE && PROFILE.name) || '').catch(function (e) {
-        console.warn('存档层没连上，成绩只存本机', e);
-      });
+      saveBar();                                   // 先按当前状态画一次
+      Store.boot((window.PROFILE && PROFILE.name) || '')
+        .then(saveBar)                             // 探测完再刷新
+        .catch(function (e) {
+          console.warn('存档层没连上，成绩只存本机', e);
+          saveBar();
+        });
     }
     var had = restore();
     if (had) updateProgress();

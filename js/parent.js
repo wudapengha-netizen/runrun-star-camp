@@ -24,6 +24,7 @@
 
     wrap.appendChild(header());
     wrap.appendChild(saveStatus());
+    wrap.appendChild(examRecords());     // 试卷成绩 —— 家长最想先看到的
     wrap.appendChild(overview());
     wrap.appendChild(calendar());
     wrap.appendChild(subjectTrend());
@@ -34,6 +35,102 @@
     wrap.appendChild(tools());
 
     root.appendChild(wrap);
+  }
+
+  /* ---------- 试卷成绩与错题 ----------
+     以前这一页只显示「每日闯关」的数据，试卷成绩根本没读，
+     家长做完卷子在这儿看不到任何记录。 */
+  var SUBJ = { math: '📐 数学', chinese: '📖 语文', english: '🔤 英语' };
+
+  function examRecords() {
+    var box = el('div', 'card');
+    box.appendChild(el('div', 'seal-title', '试卷成绩'));
+    box.appendChild(el('hr', 'rule'));
+
+    var log = (Store.examLog && Store.examLog()) || [];
+    if (!log.length) {
+      box.appendChild(el('div', 'q-sub',
+        '这里还没有试卷记录。<br><br>' +
+        '<b>如果孩子明明做过卷子却看不到，多半是这台电脑和他那台没配对上</b>——' +
+        '成绩只存在他自己浏览器里，没同步上来。<br>' +
+        '解决办法：在<b>孩子那台设备</b>上打开闯关营首页，输入同一个配对码，' +
+        '他之前做过的记录会自动补传上来。'));
+      return box;
+    }
+
+    // —— 每科一行汇总 ——
+    var grid = el('div', 'exam-sum');
+    Object.keys(SUBJ).forEach(function (k) {
+      var sub = Store.examLog(k);
+      if (!sub.length) return;
+      var last = sub[sub.length - 1];
+      var pct = Math.round(last.score / last.total * 100);
+      var open = (Store.openWrong && Store.openWrong(k).length) || 0;
+      var cell = el('div', 'exam-cell');
+      cell.innerHTML =
+        '<div class="nm">' + SUBJ[k] + '</div>' +
+        '<div class="pct" style="color:' + tone(pct) + '">' + pct + '%</div>' +
+        '<div class="sm">最近 ' + last.score + '/' + last.total + '　共考 ' + sub.length + ' 次</div>' +
+        '<div class="sm ' + (open ? 'bad' : 'good') + '">' +
+        (open ? ('还有 <b>' + open + '</b> 道没攻克') : '错题已全部攻克 🎉') + '</div>';
+      grid.appendChild(cell);
+    });
+    box.appendChild(grid);
+
+    // —— 逐次成绩 ——
+    var tb = el('table', 'exam-tbl');
+    tb.innerHTML = '<thead><tr><th>时间</th><th>科目</th><th>卷子</th><th>得分</th><th>得分率</th><th>错题</th></tr></thead>';
+    var body = el('tbody');
+    log.slice().reverse().forEach(function (r) {
+      var pct = Math.round(r.score / r.total * 100);
+      var wrongN = (r.items || []).filter(function (i) { return !i.ok; }).length;
+      body.innerHTML +=
+        '<tr><td class="dim">' + when(r.at) + '</td>' +
+        '<td>' + ((SUBJ[r.subject] || r.subject).slice(2)) + '</td>' +
+        '<td>' + esc(r.title) + '</td>' +
+        '<td class="num">' + r.score + '/' + r.total + '</td>' +
+        '<td class="num" style="color:' + tone(pct) + '"><b>' + pct + '%</b></td>' +
+        '<td class="num">' + (wrongN ? '<b style="color:var(--cinnabar)">' + wrongN + '</b>' : '0') + '</td></tr>';
+    });
+    tb.appendChild(body);
+    box.appendChild(tb);
+
+    // —— 最近一次的错题明细 ——
+    var last = log[log.length - 1];
+    var wrongs = (last.items || []).filter(function (i) { return !i.ok; });
+    if (wrongs.length) {
+      box.appendChild(el('h3', 'blk-h', '最近一次（' + esc(last.title) + '）错了 ' + wrongs.length + ' 题'));
+      var list = el('div', 'ex-wrong');
+      wrongs.forEach(function (it) {
+        list.appendChild(el('div', 'ex-item',
+          '<div class="q">' + esc(it.no) + '. ' + esc(it.q) + '</div>' +
+          '<div class="a"><span class="bad">填了：' + esc(it.got) + '</span>' +
+          '<span class="good">应为：' + esc(it.want) + '</span>' +
+          '<span class="tg">' + esc(it.tag) + '</span></div>'));
+      });
+      box.appendChild(list);
+    }
+
+    var row = el('div', 'row');
+    row.style.marginTop = '16px';
+    var b1 = el('a', 'btn btn-primary', '📕 打开错题本（完整明细）');
+    b1.href = 'wrongbook.html';
+    row.appendChild(b1);
+    var b2 = el('a', 'btn btn-ghost', '📚 知识点总表');
+    b2.href = 'syllabus.html';
+    row.appendChild(b2);
+    box.appendChild(row);
+    return box;
+  }
+
+  function tone(p) {
+    return p >= 85 ? 'var(--grass)' : p >= 70 ? 'var(--gold-deep)' : 'var(--cinnabar)';
+  }
+  function when(ts) {
+    var d = new Date(ts), n = new Date();
+    var hm = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    return d.toDateString() === n.toDateString()
+      ? ('今天 ' + hm) : ((d.getMonth() + 1) + '月' + d.getDate() + '日 ' + hm);
   }
 
   /* ---------- 存档状态 ---------- */

@@ -738,3 +738,61 @@
 .stagger > *:nth-child(4) { animation-delay: .22s; }
 .stagger > *:nth-child(5) { animation-delay: .28s; }
 .stagger > *:nth-child(6) { animation-delay: .34s; }
+
+/* ============ 家长端·试卷成绩 ============ */
+.exam-sum {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px; margin: 14px 0 18px;
+}
+.exam-cell {
+  padding: 14px 12px; border: 2px solid var(--line, #e0d6c6);
+  border-radius: 12px; background: var(--paper-2, #fffdf7); text-align: center;
+}
+.exam-cell .nm { font-size: 15px; color: var(--ink-3, #6b6155); }
+.exam-cell .pct { font-size: 32px; font-weight: 700; line-height: 1.25; }
+.exam-cell .sm { font-size: 13px; color: var(--ink-3, #6b6155); line-height: 1.65; }
+.exam-cell .sm.bad { color: var(--cinnabar, #c1462f); }
+.exam-cell .sm.good { color: var(--grass, #4a8f4a); }
+
+table.exam-tbl { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 6px; }
+table.exam-tbl th, table.exam-tbl td {
+  padding: 8px 9px; border-bottom: 1px solid var(--line, #e0d6c6); text-align: left;
+}
+table.exam-tbl th {
+  font-size: 12px; font-weight: 600; color: var(--ink-3, #6b6155);
+  background: var(--paper-3, #f7f1e4);
+}
+table.exam-tbl td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.exam-tbl td.dim { color: var(--ink-3, #6b6155); font-size: 13px; }
+
+.ex-wrong { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.ex-item {
+  padding: 10px 12px; border-left: 4px solid var(--cinnabar, #c1462f);
+  border-radius: 0 8px 8px 0; background: #fdf4f2;
+}
+.ex-item .q { font-size: 15px; line-height: 1.7; margin-bottom: 5px; }
+.ex-item .a { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; }
+.ex-item .a .bad { color: var(--cinnabar, #c1462f); }
+.ex-item .a .good { color: var(--grass, #4a8f4a); }
+.ex-item .a .tg { color: var(--ink-4, #9a8f80); }
+
+/* ============ 试卷页·存档状态条 ============ */
+.save-bar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px;
+  margin: 0 0 18px; padding: 10px 14px; border-radius: 10px;
+  font-size: 14px; line-height: 1.7;
+}
+.save-bar.ok   { background: #eef7ee; color: #2f6b2f; border: 1px solid #cfe6cf; }
+.save-bar.warn { background: #fff6e6; color: #8a6416; border: 1px solid #f0dcb0; }
+.save-bar .sp { flex: 1; }
+.save-bar input {
+  padding: 6px 10px; border: 2px solid var(--line, #e0d6c6);
+  border-radius: 8px; font: inherit; min-width: 150px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .exam-cell { background: #241f18; border-color: #3a332a; }
+  .ex-item { background: #2a1d1a; }
+  .save-bar.ok { background: #1e2a1e; color: #9fce9f; border-color: #35492f; }
+  .save-bar.warn { background: #2c2617; color: #e0c583; border-color: #4a3f22; }
+}
