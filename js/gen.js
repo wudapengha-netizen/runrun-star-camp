@@ -161,6 +161,43 @@
       why: '正方体有 <b>12 条棱</b>、6 个面、8 个顶点。<br>剪开时留 5 条不剪，所以要剪 12−5=7 条。' };
   };
 
+  G['观察物体·看到的位置'] = function (rnd) {
+    var PAIRS = [['前', '后'], ['左', '右'], ['上', '下']];
+    var k = ri(rnd, 0, 2);
+
+    if (k === 0) {
+      var pr = pick(rnd, PAIRS), i = ri(rnd, 0, 1);
+      var ask = pr[i], ans = pr[1 - i];
+      var pool = ['前', '后', '左', '右', '上', '下'].filter(function (x) { return x !== ask; });
+      var c = choice(rnd, ans, shuffle(rnd, pool.filter(function (x) { return x !== ans; })).slice(0, 3));
+      return { type: 'choice',
+        q: '一个正方体的六个面写着「前、后、左、右、上、下」。写着<b>「' + ask + '」</b>的面，对面写的是——',
+        o: c.o, a: c.a, tag: '观察物体·看到的位置',
+        why: '课本第 4 页：<b>「后」与「前」相对。</b><br>' +
+             '三组相对面：前↔后、左↔右、上↔下。所以「' + ask + '」的对面是「<b>' + ans + '</b>」。' };
+    }
+    if (k === 1) {
+      var OBJ = [
+        { o: '长方体盒子', from: '上面', see: '一个长方形' },
+        { o: '正方体骰子', from: '前面', see: '一个正方形' },
+        { o: '圆柱形水杯', from: '上面', see: '一个圆' },
+        { o: '圆柱形水杯', from: '前面', see: '一个长方形' },
+        { o: '球', from: '任何方向', see: '一个圆' }
+      ];
+      var it = pick(rnd, OBJ);
+      var c2 = choice(rnd, it.see, shuffle(rnd,
+        ['一个长方形', '一个正方形', '一个圆', '一个三角形'].filter(function (x) { return x !== it.see; })).slice(0, 3));
+      return { type: 'choice', q: '从<b>' + it.from + '</b>观察一个' + it.o + '，看到的是——',
+        o: c2.o, a: c2.a, tag: '观察物体·看到的位置',
+        why: '从一个方向看立体图形，看到的是一个<b>平面图形</b>。<br>' +
+             '从' + it.from + '看' + it.o + '，看到的是 <b>' + it.see + '</b>。（课本第 4 页练习一）' };
+    }
+    var pr3 = pick(rnd, PAIRS);
+    return { type: 'fill', q: '「' + pr3[0] + '」的相对面是「___」；一个正方体一共有 ___ 组相对的面。',
+      a: [[pr3[1]], ['3']], tag: '观察物体·看到的位置',
+      why: '三组相对面：<b>前↔后、左↔右、上↔下</b>，一共 <b>3</b> 组 6 个面。（课本第 3、4 页）' };
+  };
+
   /* ══════════════ 二、混合运算 ══════════════ */
 
   /* 只有加减：a − b + c 或 a + b − c，保证不出现负数 */

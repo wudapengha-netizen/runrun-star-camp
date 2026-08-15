@@ -213,19 +213,47 @@
     [/前/, function () { return '后'; }]
   ];
   function mutate(rnd, s) {
-    var cands = SWAP.filter(function (r) { return r[0].test(s); });
-    if (!cands.length) return null;
-    var r = pick(rnd, cands);
-    var m = s.match(r[0]);
-    return s.replace(r[0], r[1](m[1] || m[0]));
+    var cands = shuffle(rnd, SWAP.filter(function (r) { return r[0].test(s); }));
+    for (var i = 0; i < cands.length; i++) {
+      var r = cands[i];
+      var m = s.match(r[0]);
+      var out = s.replace(r[0], r[1](m[1] || m[0]));
+      if (out === s) continue;
+      /* 改完变成「"后"与"后"相对」这种废话就不要 ——
+         同一个词在句子里出现两次，说明这个替换毁掉了句子本身的对比结构。 */
+      var w = out.match(r[0]);
+      if (w) {
+        var token = w[0];
+        var times = out.split(token).length - 1;
+        if (times > 1 && token.length <= 2) continue;
+      }
+      return out;
+    }
+    return null;
+  }
+
+  /* 这句话适不适合拿来做判断题：得是个完整的、能判对错的陈述句 */
+  function judgeable(src) {
+    if (!src || src.length < 10 || src.length > 70) return false;
+    if (/……|\.\.\.|？|\?/.test(src)) return false;      // 半截话、问句都不行
+    if (/^[「『（(]/.test(src)) return false;
+    return true;
   }
 
   function factGen(tag) {
     return function (rnd) {
       var P = points()[tag];
       if (!P) return null;
+      /* 先用 text，不合适就去 eg 里找一句能判断的 ——
+         eg 里往往是更具体的例子（「前↔后、左↔右、上↔下，共 3 组 6 个面」这种），
+         比退回「这一节讲的是哪一条」有用得多。 */
       var src = strip(P.p.text || '').split(/[｜|]/)[0].trim();
-      if (src.length < 8 || src.length > 80) {
+      if (!judgeable(src)) {
+        var cands = strip(P.p.eg || '').split(/[。；;｜|<br>]+/)
+          .map(function (x) { return x.trim(); }).filter(judgeable);
+        if (cands.length) src = pick(rnd, cands);
+      }
+      if (!judgeable(src)) {
         // 原文不合适就退回「这条知识点讲的是什么」
         var others = shuffle(rnd, Object.keys(points()).filter(function (t) {
           return t !== tag && points()[t].book === P.book;
@@ -267,12 +295,20 @@
         var c2 = choice(rnd, src, fakes);
         return { type: 'choice', q: '下面哪一句是<b>课本原话</b>？', o: c2.o, a: c2.a, tag: tag, why: note };
       }
-      // 挖掉一个关键词让孩子填
-      var toks = src.match(/\d+|从左往右|先乘除|相同|不同|越大|越小|最短|最长|单数|双数|大写|小写/g);
-      if (toks && toks.length) {
-        var w = pick(rnd, toks);
-        var blanked = src.replace(w, '___');
-        return { type: 'fill', q: '把课本原话补完整：<br>' + blanked, a: [[w]], tag: tag, why: note };
+      /* 挖掉一个关键词让孩子填。
+         ⚠️ 两条限制，都是被自检抓出来才加的：
+           · 含「=」的句子不挖 —— 挖成「1500×6=___000米」这种鬼东西
+           · 数字要<b>整个</b>挖，不能挖 9000 里的那个 9 */
+      if (src.indexOf('=') < 0) {
+        var toks = src.match(/(?<!\d)\d+(?!\d)|从左往右|先乘除|相同|不同|越大|越小|最短|最长|单数|双数|大写|小写/g);
+        if (toks && toks.length) {
+          var w = pick(rnd, toks);
+          // 这个词在句子里只出现一次才挖，否则挖了会有歧义
+          if (src.split(w).length === 2) {
+            return { type: 'fill', q: '把课本原话补完整：<br>' + src.replace(w, '___'),
+              a: [[w]], tag: tag, why: note };
+          }
+        }
       }
       return { type: 'choice', q: '判断：「<b>' + src + '</b>」这句话对不对？',
         o: ['对', '错'], a: 0, tag: tag, why: '<b>对。</b>这是课本原话。<br>' + note };

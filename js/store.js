@@ -91,14 +91,19 @@
   function recordExam(res) {
     if (!Array.isArray(state.examLog)) state.examLog = [];
     var rec = {
-      id: res.paper + '@' + Date.now(),
+      id: res.id || (res.paper + '@' + Date.now()),
       paper: res.paper, subject: res.subject, title: res.title,
       round: res.round || 1,
       at: Date.now(), ms: res.ms || 0,
       score: res.score, total: res.total,
       items: res.items || []
     };
-    state.examLog.push(rec);
+    // 同 id 就覆盖 —— 边做边存时不会存出一堆半截记录
+    var at = -1;
+    for (var i = state.examLog.length - 1; i >= 0; i--) {
+      if (state.examLog[i].id === rec.id) { at = i; break; }
+    }
+    if (at >= 0) state.examLog[at] = rec; else state.examLog.push(rec);
     if (state.examLog.length > 300) state.examLog.splice(0, state.examLog.length - 300);
 
     // 顺手写进逐题流水账，家长端按知识点统计时就能把考试也算进去
@@ -132,6 +137,10 @@
         if (it.ok) { m.streak++; } else { m.wrong++; m.streak = 0; }
         m.lastOk = it.ok; m.lastAt = rec.at; m.lastGot = it.got;
         if (it.tag) m.tag = it.tag;
+        // 现出的题不在题库里，题干/答案/讲解只能靠这里存的这份
+        if (it.want) m.want = it.want;
+        if (it.q) m.q = it.q;
+        if (it.why) m.why = it.why;
       });
     });
     return map;

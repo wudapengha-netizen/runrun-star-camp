@@ -187,16 +187,21 @@
 
   /* 一道错题的明细 */
   function qCard(m, s) {
-    // 从卷子原始数据里取全文和讲解（数据库里只存了摘要）
+    /* 优先用数据库里存的那份（题干/正确答案/讲解都存了）。
+       现出的题（qid 以 gen: 开头）本来就不在题库里，
+       早先只从题库查，结果「正确答案」显示成空白 —— 这条最要命。 */
     var full = lookup(m.qid) || {};
+    var qText = m.q || full.q || '';
+    var want  = m.want || full.want || '';
+    var why   = m.why || full.why || '';
     var c = el('div', 'q-card');
     c.innerHTML =
-      '<div class="qq">' + rich(full.q || m.q || '') + '</div>' +
+      '<div class="qq">' + rich(qText) + '</div>' +
       '<div class="ans">' +
         '<span class="bad">他填的：<b>' + esc(m.lastGot || '（没答）') + '</b></span>' +
-        '<span class="good">正确答案：<b>' + esc(full.want || '') + '</b></span>' +
+        '<span class="good">正确答案：<b>' + esc(want || '（记录里没存）') + '</b></span>' +
       '</div>' +
-      (full.why ? '<div class="why">' + rich(full.why) + '</div>' : '') +
+      (why ? '<div class="why">' + rich(why) + '</div>' : '') +
       '<div class="meta">' + esc(m.qid) + '　·　做过 ' + m.tries + ' 次，错 ' + m.wrong + ' 次' +
       (m.streak ? '　·　已连对 ' + m.streak + ' 次' : '') + '　·　最近 ' + when(m.lastAt) + '</div>';
     return c;
@@ -277,9 +282,9 @@
       L.push('  还没攻克 ' + open.length + ' 道：');
       open.forEach(function (m) {
         var f = lookup(m.qid) || {};
-        L.push('   · [' + m.qid + '] ' + (m.tag || '') +
-               '｜' + String(f.q || m.q || '').replace(/<[^>]+>/g, '').slice(0, 46) +
-               '｜填了「' + (m.lastGot || '空') + '」，应为「' + (f.want || '') + '」' +
+        L.push('   · ' + (m.tag || '') +
+               '｜' + String(m.q || f.q || '').replace(/<[^>]+>/g, '').slice(0, 52) +
+               '｜填了「' + (m.lastGot || '空') + '」，应为「' + (m.want || f.want || '?') + '」' +
                '｜做 ' + m.tries + ' 次错 ' + m.wrong + ' 次');
       });
     });

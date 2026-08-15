@@ -304,6 +304,9 @@
       c.insertBefore(fb, act);
 
       answers[at] = { ok: ok, got: got, want: want, q: q };
+      /* 每答一题就存一次 —— 孩子做到一半关掉页面，之前的也不会白做。
+         同一组用同一个 sessionId，存的时候覆盖上一条，不会存出十几条来。 */
+      save();
       go.textContent = (at === list.length - 1) ? '看这一组的结果 →' : '下一题 →';
       go.focus();
       document.getElementById('view').replaceChild(bar(), document.querySelector('.pr-bar'));
@@ -369,16 +372,21 @@
   }
 
   /* ---------- 存档 ---------- */
+  var sessionId = null;
+
   function save() {
     if (!(window.Store && Store.recordExam)) return;
+    var doneN = answers.filter(function (x) { return x; }).length;
+    if (!doneN) return;
     try {
       Store.recordExam({
+        id: sessionId,                       // 同一组覆盖同一条
         paper: '练习·' + subject, subject: subject,
-        title: SUB[subject].name + '练习（' + list.length + ' 题）',
+        title: SUB[subject].name + '练习（做了 ' + doneN + ' 题）',
         ms: Date.now() - startAt,
         score: answers.filter(function (x) { return x && x.ok; }).length,
-        total: list.length,
-        items: list.map(function (q, i) {
+        total: doneN,
+        items: list.slice(0, doneN).map(function (q, i) {
           var a = answers[i] || {};
           return {
             qid: q.qid, no: i + 1, tag: q.tag, secName: '练习',
@@ -396,6 +404,7 @@
   function newRound() {
     list = build(subject);
     at = 0; answers = []; startAt = Date.now();
+    sessionId = '练习·' + subject + '@' + Date.now();
     render();
     window.scrollTo(0, 0);
   }
