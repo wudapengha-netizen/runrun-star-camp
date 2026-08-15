@@ -3,53 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>润润小明星成长营 · 八月三十一关</title>
+<title>润润的练习</title>
 <link rel="stylesheet" href="css/theme.css?v=4e2084f0">
 <link rel="stylesheet" href="css/game.css?v=d7c2dc09">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🐯</text></svg>">
+<link rel="stylesheet" href="css/exam.css?v=343b457f">
+<link rel="stylesheet" href="css/practice.css?v=65a06266">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>✏️</text></svg>">
 </head>
 <body>
 
 <div class="page">
-  <header class="hud" id="hud"></header>
+  <header class="pr-top">
+    <span class="name">✏️ 润润的练习</span>
+    <span class="sp"></span>
+    <a class="btn btn-sm btn-ghost" href="wrongbook.html">📕 错题本</a>
+    <a class="btn btn-sm btn-ghost" href="parent.html">👨‍👩‍👧 家长端</a>
+  </header>
+
   <main id="view"></main>
 </div>
 
-<canvas id="fxCanvas"></canvas>
-
-<!-- 笔顺组件（本地，离线可用） -->
-<script src="vendor/hanzi-writer.min.js?v=6d3f9a89"></script>
-<script src="vendor/hanzi-data.js?v=59fff220"></script>
-
-<!-- 配置与课表 -->
 <script src="data/profile.js?v=4a09d672"></script>
+
+<!-- 知识点总表：决定练哪些知识点、tag 归一 -->
+<script src="data/syllabus-math.js?v=5372a8fe"></script>
+<script src="data/syllabus-chinese.js?v=d80c8378"></script>
+<script src="data/syllabus-english.js?v=78ac563b"></script>
+
+<!-- 题库：现不出题的知识点（课文理解、古诗默写等）从这里挑 -->
+<script src="data/exam-math.js?v=42540fac"></script>
+<script src="data/exam-math2.js?v=c0838eaa"></script>
+<script src="data/exam-math3.js?v=4b319d75"></script>
+<script src="data/exam-math4.js?v=98b45f55"></script>
+<script src="data/exam-chinese.js?v=db902aba"></script>
+<script src="data/exam-chinese2.js?v=4f622938"></script>
+<script src="data/exam-chinese3.js?v=7dbcf27f"></script>
+<script src="data/exam-english.js?v=1add54c2"></script>
+<script src="data/exam-english2.js?v=da25ec59"></script>
+<script>
+  window.PAPERS = [window.EXAM_MATH, window.EXAM_MATH2, window.EXAM_MATH3, window.EXAM_MATH4,
+                   window.EXAM_CHINESE, window.EXAM_CHINESE2, window.EXAM_CHINESE3,
+                   window.EXAM_ENGLISH, window.EXAM_ENGLISH2].filter(Boolean);
+</script>
+
 <script src="data/cloud.js?v=cbbf5b60"></script>
-<script src="data/levels.js?v=66d3944a"></script>
-<script src="data/audio-en.js?v=176475d8"></script>
-<script src="data/plan.js?v=2bbee8b4"></script>
-
-<!-- 每日内容（第 1 周） -->
-<script src="data/days.js?v=4270a29f"></script>
-<script src="data/day01.js?v=0229cf11"></script>
-<script src="data/day02.js?v=550f4a97"></script>
-<script src="data/day03.js?v=6365e769"></script>
-<script src="data/day04.js?v=34889860"></script>
-<script src="data/day05.js?v=ed08720a"></script>
-<script src="data/day06.js?v=3907a527"></script>
-<script src="data/day07.js?v=a723c7b4"></script>
-
-<!-- 引擎 -->
 <script src="js/storage.js?v=b132d557"></script>
 <script src="js/store.js?v=0952cfb0"></script>
-<script src="js/audio.js?v=6255ab2c"></script>
-<script src="js/fx.js?v=7e8ca97c"></script>
-<script src="js/tts.js?v=41936054"></script>
-<script src="js/quiz.js?v=c6b69d1e"></script>
-<script src="js/hanzi.js?v=f888274f"></script>
-<script src="js/summary.js?v=f6973a37"></script>
-<script src="js/day.js?v=2819573e"></script>
-<script src="js/map.js?v=cb393c26"></script>
-<script src="js/app.js?v=183ef7ed"></script>
+<script src="data/words-en.js?v=8e71364f"></script>
+<script src="js/gen.js?v=cf3b02be"></script>
+<script src="js/gen2.js?v=86945feb"></script>
+<script src="js/practice.js?v=abea376e"></script>
 
 </body>
 </html>
