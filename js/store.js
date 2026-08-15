@@ -93,6 +93,10 @@
     var rec = {
       id: res.id || (res.paper + '@' + Date.now()),
       paper: res.paper, subject: res.subject, title: res.title,
+      /* kind 必须存！'full'=全知识点卷，'fix'=错题卷。
+         漏掉它，rounds.js 的 history() 就认不出这是一卷，
+         错题集算不出来，下一卷永远生成不了 —— 整条链就断在这儿。 */
+      kind: res.kind || null,
       round: res.round || 1,
       at: Date.now(), ms: res.ms || 0,
       score: res.score, total: res.total,

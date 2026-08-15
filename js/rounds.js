@@ -216,10 +216,16 @@
 
   /* ══════════ 进度：这一科做到第几卷了 ══════════ */
 
-  /* 这一科交过的卷（按顺序） */
+  /* 这一科交过的卷（按顺序）。
+     ⚠️ 不要只认 kind —— 早先 recordExam 漏存了 kind，这里就把所有记录都过滤没了，
+        错题集算不出来、下一卷永远生成不了，而且一点报错都没有。
+        现在加一层兜底：只要带 round 和逐题记录，就当是一卷。 */
   function history(subject) {
     var log = (window.Store && Store.examLog) ? Store.examLog(subject) : [];
-    return log.filter(function (r) { return r.kind === 'full' || r.kind === 'fix'; });
+    return log.filter(function (r) {
+      if (r.kind === 'full' || r.kind === 'fix') return true;
+      return !!(r.round && r.items && r.items.length);
+    });
   }
 
   /* 第 N 卷做完后的错题集：做错的题 + 背后的知识点 */
