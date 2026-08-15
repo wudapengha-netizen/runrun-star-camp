@@ -112,7 +112,8 @@
     var fp = el('div', 'q-sub');
     fp.innerHTML = '总测做完，哪里丢分就补哪里。' +
                    '这些卷子<b>不考新东西</b>，只把上一次错的知识点换着花样再练一遍——' +
-                   '有讲解、有找错题、有分步提示，做完就知道到底补上了没有。';
+                   '有讲解、有找错题、有分步提示，做完就知道到底补上了没有。<br>' +
+                   '<b>现在三科的知识点都被卷子覆盖到 100% 了</b> —— 点右边「知识点总表」能看到账。';
     fix.appendChild(fp);
     var frow = el('div');
     frow.style.cssText = 'display:flex;gap:14px;flex-wrap:wrap;margin-top:16px';
@@ -131,6 +132,21 @@
     fm4.style.cssText = 'font-size:18px;background:var(--amber,#d98f2b)';
     fm4.onclick = function () { SFX.play('tap'); location.href = 'exam-math4.html'; };
     frow.appendChild(fm4);
+    var fc2 = el('button', 'btn btn-primary', '📗 语文补漏卷（二）· 一～四单元 102 分');
+    fc2.type = 'button';
+    fc2.style.cssText = 'font-size:18px;background:var(--cinnabar)';
+    fc2.onclick = function () { SFX.play('tap'); location.href = 'exam-chinese2.html'; };
+    frow.appendChild(fc2);
+    var fc3 = el('button', 'btn btn-primary', '📘 语文补漏卷（三）· 五～八单元 104 分');
+    fc3.type = 'button';
+    fc3.style.cssText = 'font-size:18px;background:var(--cinnabar)';
+    fc3.onclick = function () { SFX.play('tap'); location.href = 'exam-chinese3.html'; };
+    frow.appendChild(fc3);
+    var fe2 = el('button', 'btn btn-primary', '🔡 英语补漏卷（二）· 全册补全 112 分');
+    fe2.type = 'button';
+    fe2.style.cssText = 'font-size:18px;background:var(--jade)';
+    fe2.onclick = function () { SFX.play('tap'); location.href = 'exam-english2.html'; };
+    frow.appendChild(fe2);
     var fsyl = el('button', 'btn btn-ghost', '📚 知识点总表 · 看考了多少');
     fsyl.type = 'button';
     fsyl.style.fontSize = '18px';

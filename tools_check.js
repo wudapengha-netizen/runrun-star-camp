@@ -12,12 +12,16 @@
    这种错不该靠人眼发现。
    ============================================================ */
 const fs = require('fs');
+const path = require('path');
 global.window = {};
-['exam-math', 'exam-math2', 'exam-math3', 'exam-math4',
- 'exam-chinese', 'exam-english'].forEach(function (n) {
-  const p = 'data/' + n + '.js';
-  if (fs.existsSync(p)) eval(fs.readFileSync(p, 'utf8'));
-});
+
+// 自动发现 data/ 下所有卷子 —— 别再写死名单。
+// 之前写死过一次，新加的三份卷子根本没被检查，白跑了一遍「全部通过」。
+const DATA = path.join(__dirname, 'data');
+fs.readdirSync(DATA)
+  .filter(function (f) { return /^exam-.*\.js$/.test(f); })
+  .sort()
+  .forEach(function (f) { eval(fs.readFileSync(path.join(DATA, f), 'utf8')); });
 
 const PAPERS = Object.keys(window)
   .filter(function (k) { return /^EXAM_/.test(k) && window[k] && window[k].sections; })
